@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { WalletService } from "@/services/wallet";
 import { StellarService, NetworkType } from "@/services/stellar";
-import { WalletType } from "@stellar/stellar-wallets-kit";
+import { WalletType } from "@creit.tech/stellar-wallets-kit";
 
 export interface TxStatus {
   id: string;

@@ -68,7 +68,7 @@ EquiRise utilizes two core smart contracts compiled to WebAssembly and deployed 
 
 - **Frontend Core**: Next.js 15, React 19, TypeScript, Tailwind CSS, Lucide icons.
 - **State & Queries**: Zustand (client states), React Query (blockchain RPC sync).
-- **Stellar Kit**: `@stellar/stellar-wallets-kit` (Freighter / multi-wallet connection).
+- **Stellar Kit**: `@creit.tech/stellar-wallets-kit` (Freighter / multi-wallet connection).
 - **Contracts**: Rust, Soroban SDK (v22.0.1).
 - **Testing Suite**: Vitest, React Testing Library (frontend), cargo test (contracts).
 - **CI/CD**: GitHub Actions workflows.

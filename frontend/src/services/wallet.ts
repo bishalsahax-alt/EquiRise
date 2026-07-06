@@ -4,7 +4,7 @@ import {
   FreighterModule,
   XBullModule,
   WalletType,
-} from "@stellar/stellar-wallets-kit";
+} from "@creit.tech/stellar-wallets-kit";
 
 export class WalletService {
   private kit: StellarWalletsKit;
