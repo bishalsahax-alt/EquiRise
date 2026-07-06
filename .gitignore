@@ -1,0 +1,19 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Node/Next
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+/frontend/.vercel
+
+# Environment files
+.env
+*.env
+!.env.example
+/frontend/.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
