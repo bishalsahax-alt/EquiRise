@@ -1,10 +1,10 @@
 import {
   StellarWalletsKit,
-  WalletNetwork,
   FreighterModule,
   XBullModule,
   WalletType,
 } from "@creit.tech/stellar-wallets-kit";
+import { Networks } from "stellar-sdk";
 
 export class WalletService {
   private kit: StellarWalletsKit;
@@ -12,7 +12,9 @@ export class WalletService {
 
   constructor(network: "testnet" | "standalone" = "testnet") {
     const targetNetwork =
-      network === "standalone" ? WalletNetwork.PUBLIC : WalletNetwork.TESTNET; // Mapping standalone for dev simplicity
+      network === "standalone" 
+        ? "Standalone Network ; Standalone Network" 
+        : Networks.TESTNET;
 
     this.kit = new StellarWalletsKit({
       network: targetNetwork,

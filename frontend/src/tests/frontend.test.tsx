@@ -13,21 +13,24 @@ vi.mock("next/navigation", () => ({
 // Mock Zustand App Store state
 vi.mock("../state/useAppStore", () => {
   return {
-    useAppStore: (selector: any) => selector({
-      publicKey: "GABACKER111111111111111111111111111111EQUI1",
-      isConnected: true,
-      network: "testnet",
-      transactions: [],
-      events: [],
-      stellarService: {
-        getNetworkDetails: () => ({
-          explorerUrl: "https://stellar.expert/explorer/testnet",
-        }),
-      },
-      connectWallet: vi.fn(),
-      disconnectWallet: vi.fn(),
-      setNetwork: vi.fn(),
-    }),
+    useAppStore: (selector?: any) => {
+      const state = {
+        publicKey: "GABACKER111111111111111111111111111111EQUI1",
+        isConnected: true,
+        network: "testnet",
+        transactions: [],
+        events: [],
+        stellarService: {
+          getNetworkDetails: () => ({
+            explorerUrl: "https://stellar.expert/explorer/testnet",
+          }),
+        },
+        connectWallet: vi.fn(),
+        disconnectWallet: vi.fn(),
+        setNetwork: vi.fn(),
+      };
+      return selector ? selector(state) : state;
+    },
   };
 });
 
