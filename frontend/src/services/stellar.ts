@@ -128,4 +128,39 @@ export class StellarService {
       throw err;
     }
   }
+
+  /**
+   * Builds an XLM payment transaction from user's address to recipient.
+   */
+  async buildPaymentTx(
+    fromAddress: string,
+    toAddress: string,
+    amount: string
+  ): Promise<any> {
+    const { Account, Operation, TransactionBuilder, Asset } = await import("stellar-sdk");
+    const server = await this.getServerAsync();
+
+    const accountData = await server.getAccount(fromAddress).catch(() => {
+      throw new Error(`Source account ${fromAddress.slice(0, 6)}... not found or unfunded on ${this.network}.`);
+    });
+
+    const op = Operation.payment({
+      destination: toAddress,
+      asset: Asset.native(),
+      amount: amount,
+    });
+
+    const tx = new TransactionBuilder(
+      new Account(fromAddress, accountData.sequenceNumber()),
+      {
+        fee: "100000", // Standard base fee
+        networkPassphrase: this.passphrase,
+      }
+    )
+      .addOperation(op)
+      .setTimeout(100)
+      .build();
+
+    return tx;
+  }
 }
