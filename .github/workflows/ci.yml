@@ -44,7 +44,7 @@ jobs:
           touch contracts/test_output.log
           touch contracts/build_output.log
           git add contracts/test_output.log contracts/build_output.log Cargo.lock contracts/Cargo.lock || true
-          git commit -m "ci: failed build/test logs [skip ci]" || exit 0
+          git commit --allow-empty -m "ci: failed build/test logs run-${{ github.run_id }} [skip ci]"
           git push origin HEAD:ci-fail-logs --force
 
   frontend-nextjs:
