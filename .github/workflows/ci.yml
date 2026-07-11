@@ -28,6 +28,12 @@ jobs:
         with:
           workspaces: contracts -> target
 
+      - name: Update Cargo dependencies precises
+        run: |
+          cargo update -p ed25519-dalek --precise 2.2.0 || true
+          cargo update -p curve25519-dalek --precise 4.1.3 || true
+        working-directory: contracts
+
       - name: Build Contracts
         run: |
           cargo build --target wasm32-unknown-unknown --release > ../build_output.log 2>&1 || touch ../failed.flag
