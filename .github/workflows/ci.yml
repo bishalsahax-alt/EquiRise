@@ -30,28 +30,26 @@ jobs:
 
       - name: Build Contracts
         run: |
-          cargo build --target wasm32-unknown-unknown --release > build_output.log 2>&1 || {
-            curl -s --data-binary @build_output.log https://paste.rs > build_url.txt
-            exit 1
-          }
+          cargo build --target wasm32-unknown-unknown --release > ../build_output.log 2>&1 || touch ../failed.flag
         working-directory: contracts
 
       - name: Run Contract Tests
         run: |
-          cargo test > test_output.log 2>&1 || {
-            curl -s --data-binary @test_output.log https://paste.rs > test_url.txt
-            exit 1
-          }
+          if [ ! -f ../failed.flag ]; then
+            cargo test > ../test_output.log 2>&1 || touch ../failed.flag
+          fi
         working-directory: contracts
 
       - name: Commit logs on failure
-        if: failure()
         run: |
-          git config --global user.name "GitHub Actions CI"
-          git config --global user.email "ci@equirise.com"
-          git add contracts/build_url.txt contracts/test_url.txt || true
-          git commit --allow-empty -m "ci: failed build/test logs run-${{ github.run_id }} [skip ci]"
-          git push origin HEAD:ci-fail-logs --force
+          if [ -f failed.flag ]; then
+            git config --global user.name "GitHub Actions CI"
+            git config --global user.email "ci@equirise.com"
+            git add build_output.log test_output.log Cargo.lock contracts/Cargo.lock || true
+            git commit --allow-empty -m "ci: failed build/test logs run-${{ github.run_id }} [skip ci]"
+            git push origin HEAD:ci-fail-logs --force
+            exit 1
+          fi
 
   frontend-nextjs:
     name: Build & Test Next.js App
