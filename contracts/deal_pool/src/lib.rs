@@ -10,7 +10,7 @@ pub trait SyndicateManagerInterface {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-#[repr(u32)]
+#[contracttype]
 pub enum PoolState {
     Active = 0,
     Funded = 1,
@@ -18,21 +18,13 @@ pub enum PoolState {
     Distributed = 3,
 }
 
-impl IntoVal<Env, Val> for PoolState {
-    fn into_val(self, env: &Env) -> Val {
-        (self as u32).into_val(env)
-    }
-}
-
-impl contracttype::FromVal<Env, Val> for PoolState {
-    fn from_val(env: &Env, val: &Val) -> Self {
-        let u: u32 = u32::from_val(env, val);
-        match u {
-            0 => PoolState::Active,
-            1 => PoolState::Funded,
-            2 => PoolState::Closed,
-            3 => PoolState::Distributed,
-            _ => panic!("invalid pool state"),
+impl PoolState {
+    pub fn to_u32(&self) -> u32 {
+        match self {
+            PoolState::Active => 0,
+            PoolState::Funded => 1,
+            PoolState::Closed => 2,
+            PoolState::Distributed => 3,
         }
     }
 }
@@ -105,7 +97,7 @@ impl DealPool {
         let invested: i128 = env.storage().instance().get(&DataKey::TotalInvested).unwrap();
         let returns: i128 = env.storage().instance().get(&DataKey::TotalReturns).unwrap();
         
-        (lead, startup, token, target, min_inv, max_inv, state as u32, invested, returns)
+        (lead, startup, token, target, min_inv, max_inv, state.to_u32(), invested, returns)
     }
 
     /// Deposit funds into the pool.
