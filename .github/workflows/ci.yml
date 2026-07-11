@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   rust-contracts:
     name: Build & Test Soroban Contracts
@@ -31,11 +34,17 @@ jobs:
 
       - name: Run Contract Tests
         run: |
-          cargo test > test_output.log 2>&1 || {
-            curl --data-binary @test_output.log https://paste.rs
-            exit 1
-          }
+          cargo test > test_output.log 2>&1
         working-directory: contracts
+
+      - name: Commit logs on failure
+        if: failure()
+        run: |
+          git config --global user.name "GitHub Actions CI"
+          git config --global user.email "ci@equirise.com"
+          git add contracts/test_output.log
+          git commit -m "ci: failed test logs [skip ci]" || exit 0
+          git push origin HEAD:ci-fail-logs --force
 
   frontend-nextjs:
     name: Build & Test Next.js App
