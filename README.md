@@ -146,8 +146,8 @@ npm run test
 
 | Contract | Target Network | Address / Hash |
 | :--- | :--- | :--- |
-| **Syndicate Manager** | Stellar Testnet | `CCSYNDICATEMANAGERXXXXXXTESTNETXXXXXXEQUI1` |
-| **Deal Pool WASM Hash** | Stellar Testnet | `5d57b322a31f7d9834241e17e3ef816a3bc50e9095655a6bfdf276ba0ce30a3f` |
+| **Syndicate Manager** | Stellar Testnet | `CDHDAJIVBYGLEQ42ILGMIALKJEQJ4LFBCOM4OQKS7P5QMZZTSSL3S3VZ` |
+| **Deal Pool WASM Hash** | Stellar Testnet | `ef5ef197536c8ced25d97a56d58813c7741b051b3af06f016d0e1ead0292f7df` |
 | **Mock USDC Token** | Stellar Testnet | `CUSDCASSETXXXXXXTESTNETXXXXXXEQUI1` |
 
 ---

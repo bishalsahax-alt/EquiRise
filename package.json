@@ -1,0 +1,17 @@
+{
+  "name": "equirise-contracts-deploy",
+  "version": "1.0.0",
+  "scripts": {
+    "setup:testnet": "ts-node scripts/setup_testnet.ts",
+    "deploy:testnet": "ts-node scripts/deploy.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "stellar-sdk": "^12.3.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5",
+    "@types/node": "^20.12.12"
+  }
+}

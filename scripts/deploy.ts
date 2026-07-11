@@ -2,8 +2,17 @@ import { execSync } from "child_process";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
+import * as os from "os";
 
 dotenv.config();
+
+// Ensure .cargo/bin is in process.env.PATH
+const cargoBin = path.join(os.homedir(), ".cargo", "bin");
+if (process.env.PATH) {
+  process.env.PATH = `${cargoBin}${path.delimiter}${process.env.PATH}`;
+} else {
+  process.env.PATH = cargoBin;
+}
 
 function runCommand(command: string): string {
   console.log(`> Executing: ${command}`);
@@ -33,12 +42,16 @@ async function deploy() {
 
   // 1. Build Contracts
   console.log("\nBuilding WebAssembly targets...");
-  runCommand("cargo build --target wasm32-unknown-unknown --release");
+  execSync("stellar contract build", {
+    cwd: path.join(process.cwd(), "contracts"),
+    stdio: "inherit",
+    env: process.env
+  });
 
   // Define Wasm paths
-  const rootDir = path.resolve(__dirname, "../");
-  const managerWasm = path.join(rootDir, "target/wasm32-unknown-unknown/release/syndicate_manager.wasm");
-  const poolWasm = path.join(rootDir, "target/wasm32-unknown-unknown/release/deal_pool.wasm");
+  const rootDir = process.cwd();
+  const managerWasm = path.join(rootDir, "contracts/target/wasm32v1-none/release/syndicate_manager.wasm");
+  const poolWasm = path.join(rootDir, "contracts/target/wasm32v1-none/release/deal_pool.wasm");
 
   // 2. Install Syndicate Manager WASM
   console.log("\nInstalling Syndicate Manager WASM on Testnet...");

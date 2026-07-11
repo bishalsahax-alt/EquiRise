@@ -38,7 +38,7 @@ FEE_COLLECTOR_ADDRESS=${publicKey}
 MOCK_USDC_TOKEN_ADDRESS=CUSDCASSETXXXXXXTESTNETXXXXXXEQUI1
 `;
 
-  const rootPath = path.resolve(__dirname, "../");
+  const rootPath = process.cwd();
   fs.writeFileSync(path.join(rootPath, ".env"), envContent);
   fs.writeFileSync(path.join(rootPath, "frontend/.env.local"), envContent);
 
