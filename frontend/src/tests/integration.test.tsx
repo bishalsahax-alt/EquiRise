@@ -1,13 +1,41 @@
 import { describe, test, expect, vi } from "vitest";
+
+// Mock the wallet service BEFORE importing useAppStore
+vi.mock("@/services/wallet", () => ({
+  WalletService: class MockWalletService {
+    connect = vi.fn(async () => "GALEAD11111111111111111111111111EQUI1");
+    signTransaction = vi.fn(async () => "signedXDR");
+    disconnect = vi.fn();
+  },
+}));
+
+// Mock stellar service too
+vi.mock("@/services/stellar", () => ({
+  StellarService: class MockStellarService {
+    getRpcServer = vi.fn();
+    getNetworkDetails = vi.fn(() => ({
+      explorerUrl: "https://stellar.expert/explorer/testnet",
+      networkPassphrase: "Test SDF Network ; September 2015",
+      rpcUrl: "https://soroban-testnet.stellar.org",
+    }));
+    submitTransaction = vi.fn(async () => ({
+      hash: "abc123", resultXdr: "", ledger: 1,
+    }));
+  },
+  NETWORK_DETAILS: {
+    testnet: { networkPassphrase: "Test SDF Network ; September 2015", rpcUrl: "https://soroban-testnet.stellar.org", explorerUrl: "https://stellar.expert/explorer/testnet" },
+    standalone: { networkPassphrase: "Standalone Network ; Standalone Network", rpcUrl: "http://localhost:8000/soroban/rpc", explorerUrl: "http://localhost:8000" },
+  },
+}));
+
 import { useAppStore } from "@/state/useAppStore";
-import { ContractService } from "@/services/contracts";
 
 // Mock the core ContractService to test state transitions in our frontend client model
 vi.mock("@/services/contracts", () => {
   const mockPools: any[] = [];
   return {
     ContractService: {
-      deployPool: vi.fn(async (startup, token, target, min, max) => {
+      deployPool: vi.fn(async (startup: string, token: string, target: number, min: number, max: number) => {
         const address = `CDP${Math.random().toString(36).substring(7).toUpperCase()}EQUI1`;
         mockPools.push({
           address,
@@ -17,40 +45,37 @@ vi.mock("@/services/contracts", () => {
           target,
           minInvestment: min,
           maxInvestment: max,
-          state: 0, // Active
+          state: 0,
           totalInvested: 0,
           totalReturns: 0,
         });
         return address;
       }),
-      deposit: vi.fn(async (poolAddr, amount) => {
+      deposit: vi.fn(async (poolAddr: string, amount: number) => {
         const pool = mockPools.find(p => p.address === poolAddr);
         if (pool) {
           pool.totalInvested += amount;
         }
       }),
-      executeDeal: vi.fn(async (poolAddr) => {
+      executeDeal: vi.fn(async (poolAddr: string) => {
         const pool = mockPools.find(p => p.address === poolAddr);
         if (pool) {
           pool.state = 1; // Funded
         }
       }),
-      claimReturns: vi.fn(async (poolAddr) => {
-        const pool = mockPools.find(p => p.address === poolAddr);
-        if (pool) {
-          // claim returns
-        }
-      }),
-      getPoolMetadata: vi.fn(async (poolAddr) => {
+      claimReturns: vi.fn(async () => {}),
+      getPoolMetadata: vi.fn(async (poolAddr: string) => {
         return mockPools.find(p => p.address === poolAddr);
       }),
     },
     CONTRACT_ADDRESSES: {
       manager: "CCSYNDICATEMANAGERXXXXXXTESTNETXXXXXXEQUI1",
       mockUsdc: "CUSDCASSETXXXXXXTESTNETXXXXXXEQUI1",
-    }
+    },
   };
 });
+
+import { ContractService } from "@/services/contracts";
 
 describe("EquiRise Platform Integration Test - Syndicate Lifecycle Flow", () => {
 
@@ -62,7 +87,6 @@ describe("EquiRise Platform Integration Test - Syndicate Lifecycle Flow", () => 
     expect(store.transactions.length).toBe(0);
 
     // 2. Connect Wallet
-    // Directly setting state to simulate connection
     useAppStore.setState({ isConnected: true, publicKey: "GALEAD11111111111111111111111111EQUI1" });
     const updatedStore = useAppStore.getState();
     expect(updatedStore.isConnected).toBe(true);
@@ -88,7 +112,7 @@ describe("EquiRise Platform Integration Test - Syndicate Lifecycle Flow", () => 
     // 4. Deposit Capital (Investors fund pool)
     const firstDeposit = 5000;
     await ContractService.deposit(deployedPoolAddr, firstDeposit);
-    
+
     let metadata = await ContractService.getPoolMetadata(deployedPoolAddr);
     expect(metadata.totalInvested).toBe(5000);
     expect(metadata.state).toBe(0); // Still Active
@@ -103,11 +127,9 @@ describe("EquiRise Platform Integration Test - Syndicate Lifecycle Flow", () => 
     metadata = await ContractService.getPoolMetadata(deployedPoolAddr);
     expect(metadata.state).toBe(1); // Funded state
 
-    // 6. Claim returns
-    // Verify execution parameters completed cleanly
+    // 6. Verify execution parameters completed cleanly
     expect(ContractService.deployPool).toHaveBeenCalledTimes(1);
     expect(ContractService.deposit).toHaveBeenCalledTimes(2);
     expect(ContractService.executeDeal).toHaveBeenCalledTimes(1);
   });
-
 });

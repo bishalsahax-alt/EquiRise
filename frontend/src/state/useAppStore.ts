@@ -1,7 +1,6 @@
 import { create } from "zustand";
-import { WalletService } from "@/services/wallet";
+import { WalletService, SupportedWalletId } from "@/services/wallet";
 import { StellarService, NetworkType } from "@/services/stellar";
-import { WalletType } from "@creit.tech/stellar-wallets-kit";
 
 export interface TxStatus {
   id: string;
@@ -31,7 +30,7 @@ interface AppState {
   
   // Actions
   setNetwork: (network: NetworkType) => void;
-  connectWallet: (walletType?: WalletType) => Promise<string>;
+  connectWallet: (moduleId?: SupportedWalletId) => Promise<string>;
   disconnectWallet: () => void;
   addTransaction: (name: string) => string;
   updateTransaction: (id: string, updates: Partial<TxStatus>) => void;
@@ -68,9 +67,9 @@ export const useAppStore = create<AppState>((set, get) => {
       get().addEvent("system", "Network Changed", `Switched to Stellar ${network.toUpperCase()}`);
     },
 
-    connectWallet: async (walletType = WalletType.FREIGHTER) => {
+    connectWallet: async (moduleId: SupportedWalletId = "freighter") => {
       try {
-        const address = await get().walletService.connect(walletType);
+        const address = await get().walletService.connect(moduleId);
         set({ publicKey: address, isConnected: true });
         get().addEvent("system", "Wallet Connected", `Connected to wallet ${address.slice(0, 6)}...${address.slice(-6)}`);
         return address;

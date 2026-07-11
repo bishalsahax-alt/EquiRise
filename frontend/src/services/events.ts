@@ -1,27 +1,28 @@
-import { rpc, xdr, scValToNative } from "stellar-sdk";
 import { useAppStore } from "@/state/useAppStore";
 import { CONTRACT_ADDRESSES } from "./contracts";
 
 export class EventSubscriber {
-  private static intervalId: NodeJS.Timeout | null = null;
+  private static intervalId: ReturnType<typeof setInterval> | null = null;
   private static lastLedger: number = 0;
   private static activeContracts: string[] = [CONTRACT_ADDRESSES.manager];
 
   /**
-   * Start polling Soroban events
+   * Start polling Soroban events via dynamic import of stellar-sdk.
    */
-  static start(networkChangeCallback?: () => void) {
+  static start() {
     if (this.intervalId) return;
 
     const store = useAppStore.getState();
-    const server = store.stellarService.getRpcServer();
 
-    // Fetch current latest ledger to start polling from
-    server.getLatestLedger().then((ledgerInfo) => {
-      this.lastLedger = ledgerInfo.sequence - 5; // look back slightly
-      
+    store.stellarService.getServerAsync().then(async (server: any) => {
+      const ledgerInfo = await server.getLatestLedger();
+      this.lastLedger = ledgerInfo.sequence - 5;
+
       this.intervalId = setInterval(async () => {
         try {
+          // Dynamically import stellar-sdk so sodium-native stays server-only
+          const { xdr, scValToNative } = await import("stellar-sdk");
+
           const latestInfo = await server.getLatestLedger();
           if (latestInfo.sequence <= this.lastLedger) return;
 
@@ -38,24 +39,22 @@ export class EventSubscriber {
 
           if (response.events && response.events.length > 0) {
             for (const event of response.events) {
-              this.processEvent(event);
+              this.processEvent(event, xdr, scValToNative);
             }
-            // Update last ledger to the highest ledger sequence in the returned events
-            const maxLedger = Math.max(...response.events.map((e) => e.ledger));
+            const maxLedger = Math.max(
+              ...response.events.map((e: any) => e.ledger)
+            );
             this.lastLedger = maxLedger;
           } else {
             this.lastLedger = latestInfo.sequence;
           }
         } catch (error) {
-          console.warn("Error polling Soroban events: ", error);
+          console.warn("Error polling Soroban events:", error);
         }
-      }, 5000); // Poll every 5s
+      }, 5000);
     });
   }
 
-  /**
-   * Stop the polling subscriber
-   */
   static stop() {
     if (this.intervalId) {
       clearInterval(this.intervalId);
@@ -63,27 +62,19 @@ export class EventSubscriber {
     }
   }
 
-  /**
-   * Dynamically add contracts to subscription pool (e.g. newly deployed Deal Pools)
-   */
   static subscribeToContract(address: string) {
     if (!this.activeContracts.includes(address)) {
       this.activeContracts.push(address);
     }
   }
 
-  /**
-   * Parse raw XDR Soroban event and add it to Zustand store
-   */
-  private static processEvent(rawEvent: rpc.Api.EventResponse) {
+  private static processEvent(rawEvent: any, xdr: any, scValToNative: any) {
     const store = useAppStore.getState();
     try {
-      const contractId = rawEvent.contractId;
-      
-      // Parse topics and value
-      const topics = rawEvent.topic.map((t) => scValToNative(xdr.ScVal.fromXDR(t, "base64")));
+      const topics = rawEvent.topic.map((t: string) =>
+        scValToNative(xdr.ScVal.fromXDR(t, "base64"))
+      );
       const value = scValToNative(xdr.ScVal.fromXDR(rawEvent.value, "base64"));
-      
       const eventName = topics[0] as string;
 
       switch (eventName) {
@@ -93,10 +84,9 @@ export class EventSubscriber {
           store.addEvent(
             "deploy",
             "New Syndicate Pool",
-            `Lead ${lead.slice(0, 6)}... created a pool at ${poolAddress.slice(0, 8)}...`
+            `Lead ${String(lead).slice(0, 6)}... created a pool at ${String(poolAddress).slice(0, 8)}...`
           );
-          // Auto subscribe to the new pool events
-          this.subscribeToContract(poolAddress);
+          this.subscribeToContract(String(poolAddress));
           break;
         }
         case "deposit": {
@@ -105,7 +95,7 @@ export class EventSubscriber {
           store.addEvent(
             "deposit",
             "Syndicate Deposit Received",
-            `Investor ${investor.slice(0, 6)}... deposited ${amount} USDC.`
+            `Investor ${String(investor).slice(0, 6)}... deposited ${amount} USDC.`
           );
           break;
         }
@@ -114,25 +104,24 @@ export class EventSubscriber {
           store.addEvent(
             "execute",
             "Deal Syndicate Executed",
-            `Pool ${pool.slice(0, 6)}... funds successfully sent to Startup.`
+            `Pool ${String(pool).slice(0, 6)}... funds successfully sent to Startup.`
           );
           break;
         }
-        case "cancelled": {
+        case "cancelled":
           store.addEvent(
             "cancel",
             "Syndicate Pool Closed",
             "Campaign completed or cancelled by the lead manager."
           );
           break;
-        }
         case "withdraw": {
           const investor = topics[1];
           const amount = Number(value);
           store.addEvent(
             "withdraw",
             "Deposit Refunded",
-            `Investor ${investor.slice(0, 6)}... withdrew ${amount} USDC.`
+            `Investor ${String(investor).slice(0, 6)}... withdrew ${amount} USDC.`
           );
           break;
         }
@@ -142,15 +131,15 @@ export class EventSubscriber {
           store.addEvent(
             "claim",
             "Returns Claimed",
-            `Investor ${investor.slice(0, 6)}... claimed ${amount} USDC exit share.`
+            `Investor ${String(investor).slice(0, 6)}... claimed ${amount} USDC exit share.`
           );
           break;
         }
         default:
-          console.log("Unhandled event type: ", eventName);
+          console.log("Unhandled event type:", eventName);
       }
     } catch (err) {
-      console.warn("Failed to parse event: ", err);
+      console.warn("Failed to parse event:", err);
     }
   }
 }

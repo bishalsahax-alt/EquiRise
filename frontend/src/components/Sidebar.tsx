@@ -7,7 +7,6 @@ import {
   TrendingUp, 
   Settings, 
   Activity, 
-  ReceiptPercent, 
   Coins, 
   ArrowUpRight,
   Menu,
