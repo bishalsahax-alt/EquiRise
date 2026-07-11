@@ -31,8 +31,8 @@ jobs:
       - name: Build Contracts
         run: |
           echo "=== CARGO UPDATE PRECISES ===" > ../build_output.log
-          cargo update -p ed25519-dalek --precise 2.2.0 >> ../build_output.log 2>&1 || true
-          cargo update -p curve25519-dalek --precise 4.1.3 >> ../build_output.log 2>&1 || true
+          cargo update -p ed25519-dalek@3.0.0 --precise 2.2.0 >> ../build_output.log 2>&1 || true
+          cargo update -p curve25519-dalek@5.0.0 --precise 4.1.3 >> ../build_output.log 2>&1 || true
           echo "=== CARGO BUILD ===" >> ../build_output.log
           cargo build --target wasm32-unknown-unknown --release >> ../build_output.log 2>&1 || touch ../failed.flag
         working-directory: contracts
