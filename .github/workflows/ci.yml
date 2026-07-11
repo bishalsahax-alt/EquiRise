@@ -67,6 +67,7 @@ jobs:
             git push origin HEAD:ci-fail-logs --force
             exit 1
           fi
+          echo "No contract build/test failures encountered."
 
   frontend-nextjs:
     name: Build & Test Next.js App
