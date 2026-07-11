@@ -37,7 +37,7 @@ export interface PoolMetadata {
 // bundle at compile time.
 // ──────────────────────────────────────────────────────────────
 async function getStellarSdk() {
-  return import("stellar-sdk");
+  return import("@stellar/stellar-sdk");
 }
 
 // ──────────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   // Keep stellar-sdk server-side only (avoids bundling sodium-native in RSC)
-  serverExternalPackages: ["stellar-sdk", "@stellar/stellar-base", "sodium-native"],
+  serverExternalPackages: ["stellar-sdk", "@stellar/stellar-sdk", "@stellar/stellar-base", "sodium-native"],
 
   webpack: (config, { isServer, webpack }) => {
     if (!isServer) {

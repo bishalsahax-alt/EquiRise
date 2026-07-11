@@ -21,7 +21,7 @@ export class EventSubscriber {
       this.intervalId = setInterval(async () => {
         try {
           // Dynamically import stellar-sdk so sodium-native stays server-only
-          const { xdr, scValToNative } = await import("stellar-sdk");
+          const { xdr, scValToNative } = await import("@stellar/stellar-sdk");
 
           const latestInfo = await server.getLatestLedger();
           if (latestInfo.sequence <= this.lastLedger) return;

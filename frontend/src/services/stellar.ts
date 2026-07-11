@@ -62,7 +62,7 @@ export class StellarService {
   /** Async version — always use this before any network call. */
   async getServerAsync(): Promise<any> {
     if (!this._server) {
-      const { rpc } = await import("stellar-sdk");
+      const { rpc } = await import("@stellar/stellar-sdk");
       this._server = new rpc.Server(this.rpcUrl);
     }
     return this._server;
@@ -78,7 +78,7 @@ export class StellarService {
       extra?: string
     ) => void
   ): Promise<{ hash: string; resultXdr: string; ledger: number }> {
-    const { Transaction, rpc } = await import("stellar-sdk");
+    const { Transaction, rpc } = await import("@stellar/stellar-sdk");
     const server = await this.getServerAsync();
 
     onStatusChange?.("submitting");
@@ -137,7 +137,7 @@ export class StellarService {
     toAddress: string,
     amount: string
   ): Promise<any> {
-    const { Account, Operation, TransactionBuilder, Asset } = await import("stellar-sdk");
+    const { Account, Operation, TransactionBuilder, Asset } = await import("@stellar/stellar-sdk");
     const server = await this.getServerAsync();
 
     const accountData = await server.getAccount(fromAddress).catch(() => {
