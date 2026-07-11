@@ -45,7 +45,11 @@ jobs:
           if [ -f failed.flag ]; then
             git config --global user.name "GitHub Actions CI"
             git config --global user.email "ci@equirise.com"
-            git add build_output.log test_output.log Cargo.lock contracts/Cargo.lock || true
+            echo "Listing root directory:"
+            ls -la
+            echo "Listing contracts directory:"
+            ls -la contracts
+            git add -f build_output.log test_output.log Cargo.lock contracts/Cargo.lock || true
             git commit --allow-empty -m "ci: failed build/test logs run-${{ github.run_id }} [skip ci]"
             git push origin HEAD:ci-fail-logs --force
             exit 1
