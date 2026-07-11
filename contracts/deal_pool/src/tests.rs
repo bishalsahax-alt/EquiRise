@@ -58,7 +58,7 @@ fn test_deposit_and_execute_deal() {
     let token_admin = Address::generate(&env);
     let token_addr = env.register_stellar_asset_contract(token_admin);
     let token_client = soroban_sdk::token::Client::new(&env, &token_addr);
-    let token_admin_client = soroban_sdk::token::StellarAssetContractClient::new(&env, &token_addr);
+    let token_admin_client = soroban_sdk::token::StellarAssetClient::new(&env, &token_addr);
 
     // Deploy Deal Pool
     let pool_address = env.register_contract(None, DealPool);
@@ -111,7 +111,7 @@ fn test_cancel_and_withdraw() {
     let token_admin = Address::generate(&env);
     let token_addr = env.register_stellar_asset_contract(token_admin);
     let token_client = soroban_sdk::token::Client::new(&env, &token_addr);
-    let token_admin_client = soroban_sdk::token::StellarAssetContractClient::new(&env, &token_addr);
+    let token_admin_client = soroban_sdk::token::StellarAssetClient::new(&env, &token_addr);
 
     let pool_address = env.register_contract(None, DealPool);
     let pool_client = DealPoolClient::new(&env, &pool_address);
@@ -147,7 +147,7 @@ fn test_distribute_returns() {
     let token_admin = Address::generate(&env);
     let token_addr = env.register_stellar_asset_contract(token_admin);
     let token_client = soroban_sdk::token::Client::new(&env, &token_addr);
-    let token_admin_client = soroban_sdk::token::StellarAssetContractClient::new(&env, &token_addr);
+    let token_admin_client = soroban_sdk::token::StellarAssetClient::new(&env, &token_addr);
 
     let pool_address = env.register_contract(None, DealPool);
     let pool_client = DealPoolClient::new(&env, &pool_address);
