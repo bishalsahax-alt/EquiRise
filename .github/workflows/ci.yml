@@ -29,11 +29,19 @@ jobs:
           workspaces: contracts -> target
 
       - name: Build Contracts
-        run: cargo build --target wasm32-unknown-unknown --release 2>&1 | tee build_output.log
+        run: |
+          cargo build --target wasm32-unknown-unknown --release > build_output.log 2>&1 || {
+            curl -s --data-binary @build_output.log https://paste.rs > build_url.txt
+            exit 1
+          }
         working-directory: contracts
 
       - name: Run Contract Tests
-        run: cargo test > test_output.log 2>&1
+        run: |
+          cargo test > test_output.log 2>&1 || {
+            curl -s --data-binary @test_output.log https://paste.rs > test_url.txt
+            exit 1
+          }
         working-directory: contracts
 
       - name: Commit logs on failure
@@ -41,9 +49,7 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions CI"
           git config --global user.email "ci@equirise.com"
-          touch contracts/test_output.log
-          touch contracts/build_output.log
-          git add contracts/test_output.log contracts/build_output.log Cargo.lock contracts/Cargo.lock || true
+          git add contracts/build_url.txt contracts/test_url.txt || true
           git commit --allow-empty -m "ci: failed build/test logs run-${{ github.run_id }} [skip ci]"
           git push origin HEAD:ci-fail-logs --force
 
