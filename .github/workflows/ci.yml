@@ -45,12 +45,25 @@ jobs:
           if [ -f failed.flag ]; then
             git config --global user.name "GitHub Actions CI"
             git config --global user.email "ci@equirise.com"
-            echo "Listing root directory:"
-            ls -la
-            echo "Listing contracts directory:"
-            ls -la contracts
-            git add -f build_output.log test_output.log Cargo.lock contracts/Cargo.lock || true
-            git commit --allow-empty -m "ci: failed build/test logs run-${{ github.run_id }} [skip ci]"
+            echo "CI PIPELINE FAILURE REPORT - RUN #${{ github.run_id }}" > commit_msg.txt
+            echo "==========================================" >> commit_msg.txt
+            echo "Root Directory Listing:" >> commit_msg.txt
+            ls -la >> commit_msg.txt
+            echo "------------------------------------------" >> commit_msg.txt
+            echo "Cargo test output logs:" >> commit_msg.txt
+            if [ -f test_output.log ]; then
+              cat test_output.log >> commit_msg.txt
+            else
+              echo "test_output.log not found!" >> commit_msg.txt
+            fi
+            echo "------------------------------------------" >> commit_msg.txt
+            echo "Cargo build output logs:" >> commit_msg.txt
+            if [ -f build_output.log ]; then
+              cat build_output.log >> commit_msg.txt
+            else
+              echo "build_output.log not found!" >> commit_msg.txt
+            fi
+            git commit --allow-empty -F commit_msg.txt
             git push origin HEAD:ci-fail-logs --force
             exit 1
           fi
