@@ -1,8 +1,12 @@
 /**
  * WalletService — wraps @creit.tech/stellar-wallets-kit v2 static API.
  *
- * v2 uses a fully static class: no `new StellarWalletsKit()`.
- * All interactions go through StellarWalletsKit.init(), .setWallet(), etc.
+ * Correct flow per v2 docs:
+ *  1. StellarWalletsKit.init({ modules, network })  — once on boot
+ *  2. StellarWalletsKit.setWallet(id)               — select wallet
+ *  3. StellarWalletsKit.fetchAddress()              — prompt user, store address
+ *  4. StellarWalletsKit.getAddress()                — read cached address
+ *  5. StellarWalletsKit.signTransaction(xdr, opts)  — sign XDR
  */
 import { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit/sdk";
 import { FreighterModule } from "@creit.tech/stellar-wallets-kit/modules/freighter";
@@ -10,6 +14,31 @@ import { xBullModule } from "@creit.tech/stellar-wallets-kit/modules/xbull";
 import { Networks } from "@creit.tech/stellar-wallets-kit/types";
 
 export type SupportedWalletId = "freighter" | "xbull";
+
+export interface WalletInfo {
+  id: SupportedWalletId;
+  name: string;
+  description: string;
+  icon: string;
+  installUrl: string;
+}
+
+export const SUPPORTED_WALLETS: WalletInfo[] = [
+  {
+    id: "freighter",
+    name: "Freighter",
+    description: "Official Stellar browser wallet by SDF",
+    icon: "🚀",
+    installUrl: "https://freighter.app",
+  },
+  {
+    id: "xbull",
+    name: "xBull",
+    description: "Feature-rich Stellar wallet",
+    icon: "🐂",
+    installUrl: "https://xbull.app",
+  },
+];
 
 export class WalletService {
   private selectedModuleId: SupportedWalletId | null = null;
@@ -19,7 +48,6 @@ export class WalletService {
     const targetNetwork =
       network === "standalone" ? Networks.STANDALONE : Networks.TESTNET;
 
-    // Static init — registers modules globally for this page session
     StellarWalletsKit.init({
       modules: [new FreighterModule(), new xBullModule()],
       network: targetNetwork,
@@ -28,7 +56,7 @@ export class WalletService {
   }
 
   /**
-   * Connect wallet and return the user's public key.
+   * Connect a specific wallet by id. Prompts the wallet extension.
    */
   async connect(moduleId: SupportedWalletId = "freighter"): Promise<string> {
     if (!this.initialized) throw new Error("WalletService not initialized");
@@ -37,18 +65,23 @@ export class WalletService {
       this.selectedModuleId = moduleId;
       StellarWalletsKit.setWallet(moduleId);
 
-      const { address } = await StellarWalletsKit.getAddress();
+      // fetchAddress prompts the wallet extension and stores the address
+      const { address } = await StellarWalletsKit.fetchAddress();
       if (!address) throw new Error("No account address returned from wallet.");
       return address;
     } catch (err: any) {
       this.selectedModuleId = null;
-      if (err.message?.includes("User reject")) {
-        throw new Error("Connection request cancelled by user.");
+      // Code -3: wallet not installed / no module selected
+      if (err?.code === -3 || err?.message?.includes("not installed")) {
+        const walletInfo = SUPPORTED_WALLETS.find((w) => w.id === moduleId);
+        throw new Error(
+          `${walletInfo?.name ?? moduleId} is not installed. Install it at ${walletInfo?.installUrl}`
+        );
       }
-      if (err.message?.includes("not installed") || err.code === -3) {
-        throw new Error(`The selected wallet (${moduleId}) is not installed.`);
+      if (err?.message?.includes("User reject") || err?.code === 4001) {
+        throw new Error("Connection request was rejected by user.");
       }
-      throw new Error(err.message || "Failed to connect wallet.");
+      throw new Error(err?.message || "Failed to connect wallet.");
     }
   }
 
@@ -66,12 +99,13 @@ export class WalletService {
       return signedTxXdr;
     } catch (err: any) {
       if (
-        err.message?.includes("User reject") ||
-        err.message?.includes("declined")
+        err?.message?.includes("User reject") ||
+        err?.message?.includes("declined") ||
+        err?.code === 4001
       ) {
         throw new Error("Transaction signing rejected by user.");
       }
-      throw new Error(err.message || "Transaction signing failed.");
+      throw new Error(err?.message || "Transaction signing failed.");
     }
   }
 
@@ -83,7 +117,11 @@ export class WalletService {
     try {
       StellarWalletsKit.disconnect();
     } catch {
-      // disconnect may not be available in all wallet states
+      // safe to ignore
     }
+  }
+
+  getSelectedWalletId(): SupportedWalletId | null {
+    return this.selectedModuleId;
   }
 }
