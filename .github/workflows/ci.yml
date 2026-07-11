@@ -30,7 +30,11 @@ jobs:
         working-directory: contracts
 
       - name: Run Contract Tests
-        run: cargo test
+        run: |
+          cargo test > test_output.log 2>&1 || {
+            curl --data-binary @test_output.log https://paste.rs
+            exit 1
+          }
         working-directory: contracts
 
   frontend-nextjs:
