@@ -43,6 +43,8 @@ jobs:
           git config --global user.name "GitHub Actions CI"
           git config --global user.email "ci@equirise.com"
           git add contracts/test_output.log
+          git add Cargo.lock || true
+          git add contracts/Cargo.lock || true
           git commit -m "ci: failed test logs [skip ci]" || exit 0
           git push origin HEAD:ci-fail-logs --force
 
