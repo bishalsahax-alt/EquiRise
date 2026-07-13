@@ -11,9 +11,9 @@ import { useAppStore } from "@/state/useAppStore";
 // ──────────────────────────────────────────────────────────────
 export const CONTRACT_ADDRESSES = {
   manager: process.env.NEXT_PUBLIC_SYNDICATE_MANAGER_ADDRESS ??
-    "CCSYNDICATEMANAGERXXXXXXTESTNETXXXXXXEQUI1",
+    "CDHDAJIVBYGLEQ42ILGMIALKJEQJ4LFBCOM4OQKS7P5QMZZTSSL3S3VZ",
   mockUsdc: process.env.NEXT_PUBLIC_MOCK_USDC_TOKEN_ADDRESS ??
-    "CUSDCASSETXXXXXXTESTNETXXXXXXEQUI1",
+    "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
 };
 
 // ──────────────────────────────────────────────────────────────

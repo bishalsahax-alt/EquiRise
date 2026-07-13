@@ -69,8 +69,8 @@ vi.mock("@/services/contracts", () => {
       }),
     },
     CONTRACT_ADDRESSES: {
-      manager: "CCSYNDICATEMANAGERXXXXXXTESTNETXXXXXXEQUI1",
-      mockUsdc: "CUSDCASSETXXXXXXTESTNETXXXXXXEQUI1",
+      manager: "CDHDAJIVBYGLEQ42ILGMIALKJEQJ4LFBCOM4OQKS7P5QMZZTSSL3S3VZ",
+      mockUsdc: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
     },
   };
 });
@@ -94,7 +94,7 @@ describe("EquiRise Platform Integration Test - Syndicate Lifecycle Flow", () => 
 
     // 3. Deploy Deal Pool
     const startupAddr = "GDSTARTUP11111111111111111111111111EQUI1";
-    const tokenAddr = "CUSDCASSETXXXXXXTESTNETXXXXXXEQUI1";
+    const tokenAddr = "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA";
     const target = 50000;
     const minInv = 500;
     const maxInv = 5000;
