@@ -358,4 +358,37 @@ export class ContractService {
       throw e;
     }
   }
+
+  /**
+   * Check if a given address is registered as an approved lead investor.
+   */
+  static async isLead(address: string): Promise<boolean> {
+    const { Address } = await getStellarSdk();
+    try {
+      const res = await this.simulateCall(
+        CONTRACT_ADDRESSES.manager,
+        "is_lead",
+        [Address.fromString(address).toScVal()]
+      );
+      return !!res;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Request self-registration/approval as a Lead Investor via the Next.js route helper.
+   */
+  static async approveLead(address: string): Promise<void> {
+    const response = await fetch("/api/approve-lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userAddress: address }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to register wallet as Lead Investor");
+    }
+  }
 }

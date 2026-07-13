@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/state/useAppStore";
 import { ContractService, PoolMetadata, CONTRACT_ADDRESSES } from "@/services/contracts";
 import { 
@@ -72,6 +72,10 @@ export default function DashboardPage() {
     },
   ]);
 
+  // Lead approval states
+  const [isApprovedLead, setIsApprovedLead] = useState<boolean | null>(null);
+  const [registeringLead, setRegisteringLead] = useState(false);
+
   // Form states
   const [startupWallet, setStartupWallet] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
@@ -83,6 +87,31 @@ export default function DashboardPage() {
   
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check lead status whenever wallet connects/disconnects
+  useEffect(() => {
+    if (isConnected && publicKey) {
+      ContractService.isLead(publicKey)
+        .then((res) => setIsApprovedLead(res))
+        .catch(() => setIsApprovedLead(false));
+    } else {
+      setIsApprovedLead(null);
+    }
+  }, [isConnected, publicKey]);
+
+  const handleRegisterLead = async () => {
+    if (!publicKey) return;
+    setRegisteringLead(true);
+    setFormError(null);
+    try {
+      await ContractService.approveLead(publicKey);
+      setIsApprovedLead(true);
+    } catch (err: any) {
+      setFormError(err.message || "Failed to self-register as Lead Investor.");
+    } finally {
+      setRegisteringLead(false);
+    }
+  };
 
   const getPoolStateBadge = (state: number) => {
     switch (state) {
@@ -322,6 +351,32 @@ export default function DashboardPage() {
               <div className="p-4 bg-secondary/20 border border-border rounded-xl text-center">
                 <HelpCircle className="mx-auto text-muted-foreground animate-bounce mb-2" size={24} />
                 <p className="text-xs text-muted-foreground">Connect wallet to unlock Lead deployment tools.</p>
+              </div>
+            ) : isApprovedLead === false ? (
+              <div className="p-4 bg-secondary/20 border border-border rounded-xl text-center space-y-3">
+                <HelpCircle className="mx-auto text-primary animate-pulse mb-1" size={24} />
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-white">Wallet Not Approved</p>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    This wallet is not yet registered as a Lead Investor on the Syndicate Manager contract.
+                  </p>
+                </div>
+                {formError && (
+                  <div className="text-[10px] text-red-200 bg-red-950/60 border border-red-800 p-2 rounded-lg">
+                    {formError}
+                  </div>
+                )}
+                <button
+                  onClick={handleRegisterLead}
+                  disabled={registeringLead}
+                  className="w-full bg-primary hover:bg-primary/95 text-white font-bold py-2 rounded-xl text-xs transition-all disabled:opacity-60"
+                >
+                  {registeringLead ? "Registering on Testnet..." : "Self-Approve as Lead (Demo)"}
+                </button>
+              </div>
+            ) : isApprovedLead === null ? (
+              <div className="p-4 bg-secondary/20 border border-border rounded-xl text-center">
+                <p className="text-xs text-muted-foreground animate-pulse">Checking lead investor status...</p>
               </div>
             ) : (
               <form onSubmit={handleDeployPool} className="space-y-3.5">
