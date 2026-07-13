@@ -10,10 +10,8 @@ import { useAppStore } from "@/state/useAppStore";
 // Public contract address constants
 // ──────────────────────────────────────────────────────────────
 export const CONTRACT_ADDRESSES = {
-  manager: process.env.NEXT_PUBLIC_SYNDICATE_MANAGER_ADDRESS ??
-    "CBF3DCZXOLOQLTNKVY4UPCC5KTTANOIT3KV3CKS7GKJI3SHX5JPFGM6M",
-  mockUsdc: process.env.NEXT_PUBLIC_MOCK_USDC_TOKEN_ADDRESS ??
-    "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+  manager: "CBF3DCZXOLOQLTNKVY4UPCC5KTTANOIT3KV3CKS7GKJI3SHX5JPFGM6M",
+  mockUsdc: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
 };
 
 // ──────────────────────────────────────────────────────────────
