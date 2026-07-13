@@ -23,7 +23,7 @@ export default function DashboardPage() {
   // Mock initial pools state to let the app be fully interactive instantly
   const [pools, setPools] = useState<PoolMetadata[]>([
     {
-      address: "CDPEQUIRISEDEALPOOL111111111111111EQUI1",
+      address: "CBPEQUIRISEDEALPOOLMOCK234567A234567B234567C234567D23456",
       lead: "GDLEAD222222222222222222222222222222EQUI1",
       startup: "GDSTARTUP11111111111111111111111111EQUI1",
       token: CONTRACT_ADDRESSES.mockUsdc,
@@ -35,7 +35,7 @@ export default function DashboardPage() {
       totalReturns: 0,
     },
     {
-      address: "CDPEQUIRISEDEALPOOL222222222222222EQUI1",
+      address: "CBPEQUIRISEDEALPOOLMOCK234567A234567B234567C234567D23457",
       lead: publicKey || "GDLEAD222222222222222222222222222222EQUI1",
       startup: "GDSTARTUP22222222222222222222222222EQUI1",
       token: CONTRACT_ADDRESSES.mockUsdc,
@@ -47,7 +47,7 @@ export default function DashboardPage() {
       totalReturns: 0,
     },
     {
-      address: "CDPEQUIRISEDEALPOOL333333333333333EQUI1",
+      address: "CBPEQUIRISEDEALPOOLMOCK234567A234567B234567C234567D23452",
       lead: "GDLEAD333333333333333333333333333333EQUI1",
       startup: "GDSTARTUP33333333333333333333333333EQUI1",
       token: CONTRACT_ADDRESSES.mockUsdc,
@@ -59,7 +59,7 @@ export default function DashboardPage() {
       totalReturns: 0,
     },
     {
-      address: "CDPEQUIRISEDEALPOOL444444444444444EQUI1",
+      address: "CBPEQUIRISEDEALPOOLMOCK234567A234567B234567C234567D23453",
       lead: "GDLEAD444444444444444444444444444444EQUI1",
       startup: "GDSTARTUP44444444444444444444444444EQUI1",
       token: CONTRACT_ADDRESSES.mockUsdc,
