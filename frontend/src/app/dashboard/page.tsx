@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppStore } from "@/state/useAppStore";
 import { ContractService, PoolMetadata, CONTRACT_ADDRESSES } from "@/services/contracts";
 import { 
