@@ -97,7 +97,7 @@ export class ContractService {
       throw new Error(`Simulation failed: ${simRes.error}`);
     }
 
-    return rpc.assembleTransaction(tx, simRes);
+    return rpc.assembleTransaction(tx, simRes).build();
   }
 
   /**
