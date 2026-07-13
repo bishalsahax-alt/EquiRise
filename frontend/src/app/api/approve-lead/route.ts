@@ -15,18 +15,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing user address" }, { status: 400 });
     }
 
-    const adminSecret = process.env.ADMIN_SECRET_KEY;
-    const adminPublic = process.env.ADMIN_PUBLIC_KEY;
-    const managerAddress = process.env.NEXT_PUBLIC_SYNDICATE_MANAGER_ADDRESS;
+    const adminSecret = process.env.ADMIN_SECRET_KEY || "SA54GYSXGK3CFQTWHDPRGTDNYV4KIHH5THNTN336JGXHFR3LC3F4BEXR";
+    const adminPublic = process.env.ADMIN_PUBLIC_KEY || "GAO2PEHKPCXWXUIPCREQN5DPLXWIGHU2EFD3U6FR6MCMKL6URVVP5EPK";
+    const managerAddress = process.env.NEXT_PUBLIC_SYNDICATE_MANAGER_ADDRESS || "CBF3DCZXOLOQLTNKVY4UPCC5KTTANOIT3KV3CKS7GKJI3SHX5JPFGM6M";
     const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org";
     const network = process.env.NEXT_PUBLIC_STELLAR_NETWORK || "testnet";
-
-    if (!adminSecret || !adminPublic || !managerAddress) {
-      return NextResponse.json(
-        { error: "Server credentials are not configured" },
-        { status: 500 }
-      );
-    }
 
     const networkPassphrase =
       network === "standalone"

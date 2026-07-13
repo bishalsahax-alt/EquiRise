@@ -68,16 +68,9 @@ export async function POST(request: Request) {
     }
 
     if (action === "mint") {
-      // Admin mints test USDC to the user
-      const adminSecret = process.env.ADMIN_SECRET_KEY;
-      const adminPublic = process.env.ADMIN_PUBLIC_KEY;
-
-      if (!adminSecret || !adminPublic) {
-        return NextResponse.json(
-          { error: "Server admin credentials are not configured" },
-          { status: 500 }
-        );
-      }
+      // Admin mints test USDC to the user (with fallbacks for zero-config Vercel deployment)
+      const adminSecret = process.env.ADMIN_SECRET_KEY || "SA54GYSXGK3CFQTWHDPRGTDNYV4KIHH5THNTN336JGXHFR3LC3F4BEXR";
+      const adminPublic = process.env.ADMIN_PUBLIC_KEY || "GAO2PEHKPCXWXUIPCREQN5DPLXWIGHU2EFD3U6FR6MCMKL6URVVP5EPK";
 
       // On testnet, the USDC issuer is a third-party account we don't control.
       // Instead, we'll send a payment from the admin account (which should have USDC).
@@ -87,7 +80,7 @@ export async function POST(request: Request) {
       const adminKeypair = Keypair.fromSecret(adminSecret);
       const adminAccountData = await server.getAccount(adminPublic);
 
-      const mintAmount = "10000"; // 10,000 USDC for testing
+      const mintAmount = "1000"; // 1,000 USDC for testing (faucet size)
 
       const tx = new TransactionBuilder(
         new Account(adminPublic, adminAccountData.sequenceNumber()),

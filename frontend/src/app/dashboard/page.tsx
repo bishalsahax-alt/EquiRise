@@ -41,6 +41,7 @@ export default function DashboardPage() {
   const [activePoolForm, setActivePoolForm] = useState<string | null>(null);
   
   const [formError, setFormError] = useState<string | null>(null);
+  const [usdcError, setUsdcError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check lead status whenever wallet connects/disconnects
@@ -71,7 +72,7 @@ export default function DashboardPage() {
   const handleSetupUsdc = async () => {
     if (!publicKey) return;
     setSettingUpUsdc(true);
-    setFormError(null);
+    setUsdcError(null);
     try {
       // Step 1: Establish trustline
       await ContractService.setupUsdcTrustline();
@@ -79,7 +80,7 @@ export default function DashboardPage() {
       await ContractService.requestTestUsdc(publicKey);
       setUsdcReady(true);
     } catch (err: any) {
-      setFormError(err.message || "Failed to setup USDC.");
+      setUsdcError(err.message || "Failed to setup USDC.");
     } finally {
       setSettingUpUsdc(false);
     }
@@ -318,9 +319,9 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          {formError && (
+          {usdcError && (
             <div className="text-[10px] text-red-200 bg-red-950/60 border border-red-800 p-2 rounded-lg">
-              {formError}
+              {usdcError}
             </div>
           )}
           <button
