@@ -392,7 +392,7 @@ export default function DashboardPage() {
                     type="text"
                     required
                     value={startupWallet}
-                    onChange={(e) => setStartupWallet(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartupWallet(e.target.value)}
                     placeholder="GD..."
                     className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-muted-foreground outline-none focus:border-primary transition-all"
                   />
@@ -404,7 +404,7 @@ export default function DashboardPage() {
                     type="number"
                     required
                     value={targetAmount}
-                    onChange={(e) => setTargetAmount(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTargetAmount(e.target.value)}
                     placeholder="e.g. 50000"
                     className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-xs text-white placeholder-muted-foreground outline-none focus:border-primary transition-all"
                   />
@@ -417,7 +417,7 @@ export default function DashboardPage() {
                       type="number"
                       required
                       value={minInvest}
-                      onChange={(e) => setMinInvest(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMinInvest(e.target.value)}
                       placeholder="100"
                       className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-xs text-white placeholder-muted-foreground outline-none focus:border-primary transition-all"
                     />
@@ -428,7 +428,7 @@ export default function DashboardPage() {
                       type="number"
                       required
                       value={maxInvest}
-                      onChange={(e) => setMaxInvest(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxInvest(e.target.value)}
                       placeholder="5000"
                       className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-xs text-white placeholder-muted-foreground outline-none focus:border-primary transition-all"
                     />
@@ -497,7 +497,7 @@ export default function DashboardPage() {
                             <input
                               type="number"
                               value={depositAmount}
-                              onChange={(e) => setDepositAmount(e.target.value)}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDepositAmount(e.target.value)}
                               placeholder="USDC Amount"
                               className="flex-1 bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-primary"
                             />
@@ -515,7 +515,7 @@ export default function DashboardPage() {
                             <input
                               type="number"
                               value={returnsAmount}
-                              onChange={(e) => setReturnsAmount(e.target.value)}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReturnsAmount(e.target.value)}
                               placeholder="Total Return Amount"
                               className="flex-1 bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-primary"
                             />
