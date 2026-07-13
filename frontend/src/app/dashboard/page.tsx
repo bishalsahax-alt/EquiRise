@@ -20,57 +20,8 @@ import {
 export default function DashboardPage() {
   const { isConnected, publicKey } = useAppStore();
 
-  // Mock initial pools state to let the app be fully interactive instantly
-  const [pools, setPools] = useState<PoolMetadata[]>([
-    {
-      address: "CBPEQUIRISEDEALPOOLMOCK234567A234567B234567C234567D23456",
-      lead: "GDLEAD222222222222222222222222222222EQUI1",
-      startup: "GDSTARTUP11111111111111111111111111EQUI1",
-      token: CONTRACT_ADDRESSES.mockUsdc,
-      target: 50000,
-      minInvestment: 500,
-      maxInvestment: 5000,
-      state: 0, // Active
-      totalInvested: 22500,
-      totalReturns: 0,
-    },
-    {
-      address: "CBPEQUIRISEDEALPOOLMOCK234567A234567B234567C234567D23457",
-      lead: publicKey || "GDLEAD222222222222222222222222222222EQUI1",
-      startup: "GDSTARTUP22222222222222222222222222EQUI1",
-      token: CONTRACT_ADDRESSES.mockUsdc,
-      target: 100000,
-      minInvestment: 1000,
-      maxInvestment: 10000,
-      state: 1, // Funded
-      totalInvested: 100000,
-      totalReturns: 0,
-    },
-    {
-      address: "CBPEQUIRISEDEALPOOLMOCK234567A234567B234567C234567D23452",
-      lead: "GDLEAD333333333333333333333333333333EQUI1",
-      startup: "GDSTARTUP33333333333333333333333333EQUI1",
-      token: CONTRACT_ADDRESSES.mockUsdc,
-      target: 30000,
-      minInvestment: 100,
-      maxInvestment: 2000,
-      state: 2, // Closed
-      totalInvested: 12000,
-      totalReturns: 0,
-    },
-    {
-      address: "CBPEQUIRISEDEALPOOLMOCK234567A234567B234567C234567D23453",
-      lead: "GDLEAD444444444444444444444444444444EQUI1",
-      startup: "GDSTARTUP44444444444444444444444444EQUI1",
-      token: CONTRACT_ADDRESSES.mockUsdc,
-      target: 80000,
-      minInvestment: 500,
-      maxInvestment: 8000,
-      state: 3, // Distributed
-      totalInvested: 80000,
-      totalReturns: 160000,
-    },
-  ]);
+  // Pools deployed on-chain. Starts empty; populated by user via Deploy form.
+  const [pools, setPools] = useState<PoolMetadata[]>([]);
 
   // Lead approval states
   const [isApprovedLead, setIsApprovedLead] = useState<boolean | null>(null);
@@ -320,7 +271,7 @@ export default function DashboardPage() {
         <div className="glass-card rounded-2xl p-5 border border-border flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground font-semibold">Total Locked Capital</span>
-            <h3 className="text-xl font-bold text-white">202,500 USDC</h3>
+            <h3 className="text-xl font-bold text-white">{pools.reduce((s, p) => s + p.totalInvested, 0).toLocaleString()} USDC</h3>
           </div>
           <div className="p-3 bg-primary/10 text-primary rounded-xl"><Layers size={20} /></div>
         </div>
@@ -338,7 +289,7 @@ export default function DashboardPage() {
         <div className="glass-card rounded-2xl p-5 border border-border flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground font-semibold">Platform Fee Collected</span>
-            <h3 className="text-xl font-bold text-white">3,600 USDC</h3>
+            <h3 className="text-xl font-bold text-white">{Math.floor(pools.reduce((s, p) => s + p.totalInvested, 0) * 0.02).toLocaleString()} USDC</h3>
           </div>
           <div className="p-3 bg-primary/10 text-primary rounded-xl"><UserCheck size={20} /></div>
         </div>
@@ -346,7 +297,7 @@ export default function DashboardPage() {
         <div className="glass-card rounded-2xl p-5 border border-border flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground font-semibold">Yields Distributed</span>
-            <h3 className="text-xl font-bold text-white">160,000 USDC</h3>
+            <h3 className="text-xl font-bold text-white">{pools.reduce((s, p) => s + p.totalReturns, 0).toLocaleString()} USDC</h3>
           </div>
           <div className="p-3 bg-primary/10 text-primary rounded-xl"><TrendingUp size={20} /></div>
         </div>
