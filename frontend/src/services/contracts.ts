@@ -191,21 +191,30 @@ export class ContractService {
 
       store.updateTransaction(txId, { status: "confirmed", hash: res.hash });
 
-      // Attempt to parse the actual deployed contract address from the transaction result XDR.
+      // Attempt to parse the actual deployed contract address.
       let poolAddr = "";
       try {
-        const { xdr, scValToNative } = await getStellarSdk();
-        const txResult = xdr.TransactionResult.fromXDR(res.resultXdr, "base64");
-        const results = txResult.result().results();
-        if (results && results.length > 0) {
-          const tr = results[0].tr();
-          const invokeResult = tr.invokeHostFunctionResult();
-          const successBuffer = invokeResult.success();
-          const scVal = xdr.ScVal.fromXDR(successBuffer);
-          poolAddr = scValToNative(scVal);
+        const { scValToNative, xdr } = await getStellarSdk();
+        if (res.returnValue) {
+          poolAddr = scValToNative(res.returnValue);
+        } else {
+          let txResult;
+          if (typeof res.resultXdr === "string") {
+            txResult = xdr.TransactionResult.fromXDR(res.resultXdr, "base64");
+          } else {
+            txResult = res.resultXdr;
+          }
+          const results = txResult.result().results();
+          if (results && results.length > 0) {
+            const tr = results[0].tr();
+            const invokeResult = tr.invokeHostFunctionResult();
+            const successBuffer = invokeResult.success();
+            const scVal = xdr.ScVal.fromXDR(successBuffer);
+            poolAddr = scValToNative(scVal);
+          }
         }
       } catch (err) {
-        console.warn("Failed to parse pool address from resultXdr, generating a valid mock address:", err);
+        console.warn("Failed to parse pool address from transaction results:", err);
       }
 
       if (!poolAddr) {

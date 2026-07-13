@@ -77,7 +77,7 @@ export class StellarService {
       status: "submitting" | "pending" | "processing" | "confirmed" | "failed",
       extra?: string
     ) => void
-  ): Promise<{ hash: string; resultXdr: string; ledger: number }> {
+  ): Promise<{ hash: string; resultXdr: any; returnValue?: any; ledger: number }> {
     const { Transaction, rpc } = await import("@stellar/stellar-sdk");
     const server = await this.getServerAsync();
 
@@ -107,6 +107,7 @@ export class StellarService {
           return {
             hash: txHash,
             resultXdr: statusResponse.resultXdr,
+            returnValue: statusResponse.returnValue,
             ledger: statusResponse.ledger,
           };
         }
