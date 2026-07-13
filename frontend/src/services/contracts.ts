@@ -488,4 +488,76 @@ export class ContractService {
       throw new Error(data.error || "Failed to register wallet as Lead Investor");
     }
   }
+
+  /**
+   * Establish USDC trustline for the connected wallet.
+   * On Stellar, accounts must add a ChangeTrust operation before they can hold
+   * any non-native asset (like USDC). This method:
+   *   1. Fetches an unsigned ChangeTrust transaction from the API
+   *   2. Has the user sign it via their wallet
+   *   3. Submits it to the network
+   */
+  static async setupUsdcTrustline(): Promise<void> {
+    const store = this.getStore();
+    const txId = store.addTransaction("Establish USDC Trustline");
+
+    try {
+      // Step 1: Get unsigned ChangeTrust transaction from API
+      const response = await fetch("/api/setup-usdc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userAddress: store.publicKey,
+          action: "trustline",
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to build trustline transaction");
+      }
+
+      const { unsignedXdr } = await response.json();
+
+      // Step 2: Sign with user's wallet
+      const signedXdr = await store.walletService.signTransaction(
+        unsignedXdr,
+        store.publicKey!
+      );
+
+      // Step 3: Submit to network
+      const res = await store.stellarService.submitTransaction(
+        signedXdr,
+        (status: any, extra?: string) => {
+          store.updateTransaction(txId, { status, error: extra });
+        }
+      );
+
+      store.updateTransaction(txId, { status: "confirmed", hash: res.hash });
+      store.addEvent(
+        "system",
+        "USDC Trustline Established",
+        "Your wallet can now hold and transfer USDC tokens."
+      );
+    } catch (e: any) {
+      store.updateTransaction(txId, { status: "failed", error: e.message });
+      throw e;
+    }
+  }
+
+  /**
+   * Request test USDC tokens from the admin (demo/testnet only).
+   */
+  static async requestTestUsdc(address: string): Promise<void> {
+    const response = await fetch("/api/setup-usdc", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userAddress: address, action: "mint" }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to receive test USDC");
+    }
+  }
 }

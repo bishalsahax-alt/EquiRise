@@ -76,6 +76,10 @@ export default function DashboardPage() {
   const [isApprovedLead, setIsApprovedLead] = useState<boolean | null>(null);
   const [registeringLead, setRegisteringLead] = useState(false);
 
+  // USDC setup states
+  const [settingUpUsdc, setSettingUpUsdc] = useState(false);
+  const [usdcReady, setUsdcReady] = useState(false);
+
   // Form states
   const [startupWallet, setStartupWallet] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
@@ -110,6 +114,23 @@ export default function DashboardPage() {
       setFormError(err.message || "Failed to self-register as Lead Investor.");
     } finally {
       setRegisteringLead(false);
+    }
+  };
+
+  const handleSetupUsdc = async () => {
+    if (!publicKey) return;
+    setSettingUpUsdc(true);
+    setFormError(null);
+    try {
+      // Step 1: Establish trustline
+      await ContractService.setupUsdcTrustline();
+      // Step 2: Request test USDC
+      await ContractService.requestTestUsdc(publicKey);
+      setUsdcReady(true);
+    } catch (err: any) {
+      setFormError(err.message || "Failed to setup USDC.");
+    } finally {
+      setSettingUpUsdc(false);
     }
   };
 
@@ -330,6 +351,46 @@ export default function DashboardPage() {
           <div className="p-3 bg-primary/10 text-primary rounded-xl"><TrendingUp size={20} /></div>
         </div>
       </div>
+
+      {/* USDC Testnet Setup Banner */}
+      {isConnected && !usdcReady && (
+        <div className="glass-panel rounded-2xl border border-amber-500/30 p-5 space-y-3 bg-amber-950/20">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl">
+              <Coins size={20} />
+            </div>
+            <div className="space-y-0.5">
+              <h3 className="text-sm font-bold text-white">Setup USDC for Testnet</h3>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Before you can deposit into deal pools, your wallet needs a USDC trustline and test tokens.
+                This is a one-time setup for the Stellar testnet.
+              </p>
+            </div>
+          </div>
+          {formError && (
+            <div className="text-[10px] text-red-200 bg-red-950/60 border border-red-800 p-2 rounded-lg">
+              {formError}
+            </div>
+          )}
+          <button
+            onClick={handleSetupUsdc}
+            disabled={settingUpUsdc}
+            className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {settingUpUsdc ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                Setting up USDC (sign the wallet prompt)...
+              </>
+            ) : (
+              <>
+                <Coins size={14} />
+                Setup USDC Trustline &amp; Get Test Tokens
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Main Split Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
