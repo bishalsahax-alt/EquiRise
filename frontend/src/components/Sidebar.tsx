@@ -10,7 +10,8 @@ import {
   Coins, 
   ArrowUpRight,
   Menu,
-  X
+  X,
+  ArrowLeft
 } from "lucide-react";
 import { useState } from "react";
 import { clsx } from "clsx";
@@ -51,8 +52,13 @@ export default function Sidebar() {
       )}>
         <div>
           {/* Logo */}
-          <div className="h-16 flex items-center px-6 border-b border-border gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-orange-400 flex items-center justify-center font-bold text-white shadow-md shadow-primary/20">
+          <Link 
+            href="/"
+            onClick={() => setMobileOpen(false)}
+            className="h-16 flex items-center px-6 border-b border-border gap-2 hover:bg-secondary/30 transition-colors group cursor-pointer"
+            title="Back to Login / Home"
+          >
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-orange-400 flex items-center justify-center font-bold text-white shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
               E
             </div>
             <div>
@@ -63,7 +69,7 @@ export default function Sidebar() {
                 SYNDICATE
               </span>
             </div>
-          </div>
+          </Link>
 
           {/* Navigation Links */}
           <nav className="p-4 space-y-1">
@@ -90,6 +96,18 @@ export default function Sidebar() {
                 </Link>
               );
             })}
+
+            {/* Dedicated Back to Login Page Link */}
+            <div className="pt-2 mt-2 border-t border-border/40">
+              <Link
+                href="/"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-primary hover:bg-primary/10 border border-primary/20 transition-all group"
+              >
+                <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
+                Back to Login
+              </Link>
+            </div>
           </nav>
         </div>
 
