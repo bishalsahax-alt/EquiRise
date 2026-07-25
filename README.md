@@ -1,16 +1,151 @@
-# EquiRise - Startup Investment Syndicate Platform
+<h1 align="center">EquiRise Startup Investment Syndicate</h1>
 
-EquiRise is a decentralized startup investment syndicate platform built on Stellar. It empowers lead investors to securely spin up deal pools via Soroban smart contracts, pool capital from backed community investors, automate cap table management, and transparently distribute returns.
+<p align="center">
+  <strong>A Decentralized, Milestone & Pro-Rata Startup Investment Syndicate Platform built on the Stellar network using decoupled Soroban smart contracts.</strong>
+</p>
+
+<p align="center">
+  <a href="https://equirise.vercel.app/" target="_blank">
+    <img src="https://img.shields.io/badge/LIVE_DEMO-EQUIRISE.VERCEL.APP-cyan?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/bishalsahax-alt/EquiRise/actions/workflows/ci.yml" target="_blank">
+    <img src="https://github.com/bishalsahax-alt/EquiRise/actions/workflows/ci.yml/badge.svg" alt="CI/CD Pipeline" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="#overview">Overview</a> •
+  <a href="#tech-stack">Tech Stack</a> •
+  <a href="#directory-structure">Directory Structure</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#contract-design">Smart Contracts</a> •
+  <a href="#development">Development</a> •
+  <a href="#deployment-guide">Deployment Guide</a> •
+  <a href="#verification">Verification</a> •
+  <a href="#security">Security</a> •
+  <a href="#screenshots">Screenshots</a>
+</p>
 
 ---
 
-## Architecture & System Design
+* **GitHub Repository:** [bishalsahax-alt/EquiRise](https://github.com/bishalsahax-alt/EquiRise)
+* **Walkthrough Demo Video:** [Link to Walkthrough Video]
 
-### Platform Components
+---
+
+## Table of Contents
+
+* [1. Product Overview & Problem Statement](#overview)
+  * [The Problem](#the-problem)
+  * [The EquiRise Solution](#the-equirise-solution)
+* [2. Technical Stack](#tech-stack)
+* [3. Directory Structure](#directory-structure)
+* [4. Technical Architecture & Component Flow](#architecture)
+  * [1. Platform Components Diagram](#platform-components)
+  * [2. Inter-Contract Communication Flow](#inter-contract-communication)
+* [5. Smart Contract Design](#contract-design)
+  * [Syndicate Manager (Factory Contract)](#syndicate-manager)
+  * [Deal Pool (Escrow & Execution Contract)](#deal-pool)
+  * [Data Storage & TTL Preservation](#storage-design)
+  * [Access Control & Upgradability](#access-control)
+* [6. Local Development & Testing](#development)
+  * [Prerequisites](#prerequisites)
+  * [Compilation & Smart Contract Unit Testing](#compilation-testing)
+  * [Frontend Development & Vitest Suite](#frontend-dev)
+* [7. Stellar Testnet Deployment Guide](#deployment-guide)
+  * [Step 1: Configure Deployer Identity](#deployer-identity)
+  * [Step 2: Compile WASM Bytecodes](#compile-wasm)
+  * [Step 3: Deploy Syndicate Manager](#deploy-manager)
+  * [Step 4: Deploy Deal Pool WASM Hash](#deploy-pool-wasm)
+  * [Step 5: Initialize Contracts & Environment Setup](#initialize-contracts)
+* [8. Deployed Contract Verification](#verification)
+  * [On-Chain Contract Verification Links](#verification-links)
+* [9. Security Considerations](#security)
+* [10. Project Media & Screenshots](#screenshots)
+
+---
+
+<a name="overview"></a>
+## 1. Product Overview & Problem Statement
+
+### The Problem
+Traditional venture capital and angel syndicates suffer from opacity, high administrative overhead, manual cap table calculations, and fragmented escrow arrangements. Lead investors expend significant time manually collecting funds, tracking deposits across multiple off-chain bank accounts, and executing distribution payouts. Backing community investors are left with limited real-time visibility into capital pooling progress, deal execution milestones, and proportional ROI distributions.
+
+### The EquiRise Solution
+EquiRise resolves these structural limitations on the Stellar blockchain using:
+* **Decoupled Syndicate Manager (Factory)**: Lead investors spin up dedicated `Deal Pool` instances on-demand while global platform rules, fee structures, and whitelists remain centralized in a governed `Syndicate Manager` contract.
+* **Non-Custodial Capital Escrow**: Backed community investors deposit assets (such as USDC) directly into automated smart contract pools with enforced investment bounds (min/max deposits) and automatic milestone tracking.
+* **Pro-Rata ROI & Fee Distribution**: When a deal is executed or returns are generated, the smart contract automatically calculates pro-rata payouts for all syndicate participants and deducts platform fees seamlessly before disbursing funds to startups.
+
+---
+
+<a name="tech-stack"></a>
+## 2. Technical Stack
+
+* **Smart Contracts:** Rust, Soroban SDK (pinned to `v22.0.1` for maximum environment compatibility)
+* **Frontend:** Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Lucide Icons
+* **State Management:** Zustand (wallet session persistence, transaction logs, active syndicate tracking)
+* **Data Querying:** React Query (RPC state status synchronization)
+* **Wallet Connection:** `@creit.tech/stellar-wallets-kit` SDK (Freighter / xBull / LOBSTR / Hana)
+* **Testing & Quality Assurance:** Vitest, React Testing Library, Cargo Unit Testing Suite
+* **Web3 Design Aesthetics:** Dark-mode aesthetic with custom neon accents, status badges, dynamic stats counters, modal dialogs, and responsive layout.
+
+---
+
+<a name="directory-structure"></a>
+## 3. Directory Structure
+
+The project is organized with a feature-based modular architecture separating smart contracts, deployment scripts, and the Next.js web application:
+
+```
+EquiRise/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                     # CI/CD Pipeline Configuration
+├── contracts/
+│   ├── Cargo.toml                     # Workspace Cargo configuration
+│   ├── syndicate_manager/             # Syndicate Manager (Factory & Access Control)
+│   │   ├── Cargo.toml
+│   │   └── src/
+│   │       ├── lib.rs                 # Factory logic, RBAC, fee governance
+│   │       └── tests.rs               # Unit tests for factory contract
+│   └── deal_pool/                     # Deal Pool (Escrow & Pro-Rata Distribution)
+│       ├── Cargo.toml
+│       └── src/
+│           ├── lib.rs                 # Escrow pooling, state machine, payouts
+│           └── tests.rs               # Unit tests for deal pool contract
+├── frontend/
+│   ├── src/
+│   │   ├── app/                       # Next.js App Router pages (Dashboard, Deals, Analytics)
+│   │   ├── components/                # UI components (Navbar, Modals, Cards, Badges)
+│   │   ├── services/                  # Stellar SDK & RPC integration layer
+│   │   ├── state/                     # Zustand global state stores
+│   │   └── tests/                     # Vitest component & integration tests
+│   ├── package.json
+│   └── vitest.config.ts
+├── scripts/
+│   ├── setup_testnet.ts               # Deployer account creation & Friendbot funding
+│   └── deploy.ts                      # Soroban contract compilation & testnet deployment
+├── .env.example                       # Environment variable templates
+├── package.json                       # Root script execution configuration
+├── tsconfig.json                      # TypeScript configuration
+└── README.md                          # Project Documentation
+```
+
+---
+
+<a name="architecture"></a>
+## 4. Technical Architecture & Component Flow
+
+<a name="platform-components"></a>
+### 1. Platform Components Diagram
 
 ```mermaid
 graph TD
-    User[Investor / Lead] <--> Frontend[Next.js App + StellarWalletsKit]
+    User[Investor / Syndicate Lead] <--> Frontend[Next.js App + StellarWalletsKit]
     Frontend <--> Horizon[Horizon API / RPC Node]
     Horizon <--> Manager[Syndicate Manager Contract]
     Horizon <--> Pool[Deal Pool Contract]
@@ -20,7 +155,8 @@ graph TD
     Pool -- Transfers Assets --> Token[Stellar Asset Contract / SAC Token]
 ```
 
-### Inter-Contract Communication Flow
+<a name="inter-contract-communication"></a>
+### 2. Inter-Contract Communication Sequence
 
 ```mermaid
 sequenceDiagram
@@ -48,112 +184,142 @@ sequenceDiagram
 
 ---
 
-## Smart Contract Design
+<a name="contract-design"></a>
+## 5. Smart Contract Design
 
-EquiRise utilizes two core smart contracts compiled to WebAssembly and deployed on Stellar's Soroban VM:
+EquiRise utilizes two core smart contracts compiled to WebAssembly and executed on Stellar's Soroban VM:
 
-1. **Syndicate Manager (Factory & RBAC)**
-   - Deploys new Deal Pool instances dynamically.
-   - Restricts deal creation to verified lead investors via Role-Based Access Control (RBAC).
-   - Manages global platforms fees, collector addresses, and contract upgrade mappings.
+<a name="syndicate-manager"></a>
+### 1. Syndicate Manager (Factory Contract)
+- **Dynamic Instance Deployment**: Deploys new `Deal Pool` instances using `env.deployer().with_current_contract(salt).deploy(wasm_hash)`.
+- **Role-Based Access Control (RBAC)**: Enforces authorized lead investor verification and admin privileges.
+- **Platform Fee Governance**: Stores and returns global fee configurations (`fee_collector`, `fee_bps`).
 
-2. **Deal Pool**
-   - Stores specific configuration parameters (Lead, Startup Address, Target Capital Goal, Investment Bounds).
-   - Manages the capital pooling phases: `Active` -> `Funded` / `Closed` -> `Distributed`.
-   - Distributes proportional ROI returns dynamically back to syndicate investors (pro-rata distribution).
+<a name="deal-pool"></a>
+### 2. Deal Pool (Escrow & Execution Contract)
+- **State Machine Management**: Transitions through lifecycle phases: `Active` ➔ `Funded` / `Closed` ➔ `Distributed`.
+- **Capital Bounds**: Validates individual deposit parameters (`min_deposit`, `max_deposit`) and checks total pooled funds against `target_amount`.
+- **Pro-Rata Payout Calculation**: Calculates exact share ratios for backing investors during ROI returns distribution without rounding discrepancies.
+
+<a name="storage-design"></a>
+### 3. Data Storage & TTL Preservation
+- Uses Soroban Instance and Persistent storage types strategically to optimize gas overhead.
+- Implements `extend_ttl` calls to ensure contract state and balance tracking keys remain active on-chain.
+
+<a name="access-control"></a>
+### 4. Access Control & Upgradability
+- Sensitive actions (e.g. executing deals, cancelling pools, updating fee configs) require explicit `.require_auth()` signature verification.
+- Upgrades are governed by the Syndicate Manager admin through secure `upgrade` functions.
 
 ---
 
-## Tech Stack & Features
+<a name="development"></a>
+## 6. Local Development & Testing
 
-- **Frontend Core**: Next.js 15, React 19, TypeScript, Tailwind CSS, Lucide icons.
-- **State & Queries**: Zustand (client states), React Query (blockchain RPC sync).
-- **Stellar Kit**: `@creit.tech/stellar-wallets-kit` (Freighter / multi-wallet connection).
-- **Contracts**: Rust, Soroban SDK (v22.0.1).
-- **Testing Suite**: Vitest, React Testing Library (frontend), cargo test (contracts).
-- **CI/CD**: GitHub Actions workflows.
+### Prerequisites
+* **Rust**: `v1.75.0` or higher with target `wasm32-unknown-unknown`
+* **Node.js**: `v18.0.0` or higher
+* **Stellar CLI / Soroban CLI**: Installed locally
+
+### Compilation & Smart Contract Unit Testing
+
+```bash
+# Navigate to contracts directory
+cd contracts
+
+# Run unit tests across all contracts
+cargo test
+
+# Build optimized WASM binaries for target deployment
+cargo build --target wasm32-unknown-unknown --release
+```
+
+### Frontend Development & Vitest Suite
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Run Next.js local development server
+npm run dev
+
+# Run Vitest test suite
+npm run test
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to interact with the dApp UI.
 
 ---
 
-## Environment Variables
+<a name="deployment-guide"></a>
+## 7. Stellar Testnet Deployment Guide
 
-Copy `.env.example` to create your local environments:
+<a name="deployer-identity"></a>
+### Step 1: Configure Deployer Identity
+Generate or set your deployer secret key in `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-| Name | Description | Default |
-| :--- | :--- | :--- |
-| `NEXT_PUBLIC_STELLAR_NETWORK` | Target network type | `testnet` |
-| `NEXT_PUBLIC_RPC_URL` | Stellar RPC endpoint | `https://soroban-testnet.stellar.org` |
-| `NEXT_PUBLIC_EXPLORER_URL` | Transaction explorer URL | `https://stellar.expert/explorer/testnet` |
-| `ADMIN_SECRET_KEY` | Deployer credentials | `S...` |
-| `NEXT_PUBLIC_SYNDICATE_MANAGER_ADDRESS` | Deployed Manager contract address | (Populated on deploy) |
-| `NEXT_PUBLIC_DEAL_POOL_WASM_HASH` | Deal Pool contract WASM Hash template | (Populated on deploy) |
-
----
-
-## Local Development & Operations
-
-### 1. Compile & Test Soroban Contracts
-
-Make sure you have Rust and the `wasm32-unknown-unknown` target installed.
+<a name="compile-wasm"></a>
+### Step 2: Compile WASM Bytecodes
+Compile the release WASM binaries for `syndicate_manager` and `deal_pool`:
 
 ```bash
-# Go to contracts folder
 cd contracts
-
-# Run unit tests
-cargo test
-
-# Build target Wasm files
 cargo build --target wasm32-unknown-unknown --release
+cd ..
 ```
 
-### 2. Deploy to Stellar Testnet
-
-Run our automated configuration scripts:
+<a name="deploy-manager"></a>
+### Step 3: Deploy & Initialize Syndicate Manager
+Run the automated testnet setup script to request Friendbot funding and deploy contracts:
 
 ```bash
-# 1. Setup random admin account and request Friendbot funding
+# Fund deployer account via Friendbot
 npm run setup:testnet
 
-# 2. Deploy contracts and save configs to .env
+# Deploy Syndicate Manager & register Deal Pool WASM Hash
 npm run deploy:testnet
 ```
 
-### 3. Launch Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) to interact with the platform.
-
-### 4. Run Frontend Tests
-
-```bash
-cd frontend
-npm run test
-```
+The deployment script automatically updates `.env` with the deployed `NEXT_PUBLIC_SYNDICATE_MANAGER_ADDRESS` and `NEXT_PUBLIC_DEAL_POOL_WASM_HASH`.
 
 ---
 
-## Smart Contract Address Catalog
+<a name="verification"></a>
+## 8. Deployed Contract Verification
 
-| Contract | Target Network | Address / Hash |
-| :--- | :--- | :--- |
-| **Syndicate Manager** | Stellar Testnet | `CDHDAJIVBYGLEQ42ILGMIALKJEQJ4LFBCOM4OQKS7P5QMZZTSSL3S3VZ` |
-| **Deal Pool WASM Hash** | Stellar Testnet | `ef5ef197536c8ced25d97a56d58813c7741b051b3af06f016d0e1ead0292f7df` |
-| **Mock USDC Token** | Stellar Testnet | `CUSDCASSETXXXXXXTESTNETXXXXXXEQUI1` |
+<a name="verification-links"></a>
+### On-Chain Contract Verification Links
+
+| Contract / Asset | Target Network | Deployed Address / Hash | Explorer Link |
+| :--- | :--- | :--- | :--- |
+| **Syndicate Manager** | Stellar Testnet | `CDHDAJIVBYGLEQ42ILGMIALKJEQJ4LFBCOM4OQKS7P5QMZZTSSL3S3VZ` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CDHDAJIVBYGLEQ42ILGMIALKJEQJ4LFBCOM4OQKS7P5QMZZTSSL3S3VZ) |
+| **Deal Pool WASM Hash** | Stellar Testnet | `ef5ef197536c8ced25d97a56d58813c7741b051b3af06f016d0e1ead0292f7df` | [View WASM Hash Details](https://stellar.expert/explorer/testnet) |
+| **Mock USDC Token** | Stellar Testnet | `CUSDCASSETXXXXXXTESTNETXXXXXXEQUI1` | [View Asset Details](https://stellar.expert/explorer/testnet) |
 
 ---
 
-## Security Considerations
+<a name="security"></a>
+## 9. Security Considerations
 
-1. **Reentrancy Protection**: Token transfers are performed *after* state modification where possible to prevent classic reentrancy attack vectors.
-2. **Access Control**: Lead-specific operations require explicit `lead.require_auth()` verification, preventing arbitrary execution.
-3. **Upgradeability Control**: Syndicate Manager contract can only be upgraded by the admin address using safe `upgrade` functions.
+1. **Reentrancy Protection**: State updates precede asset transfers across all execution logic to mitigate reentrancy risks.
+2. **Strict Authentication Checks**: Investor deposits, lead executions, and admin administrative updates enforce strict `.require_auth()` verification.
+3. **Bounded Deposit Thresholds**: Minimum and maximum deposit caps prevent target overflow and protect small-ticket investors.
+4. **Governed Upgradability**: Contract upgrades require cryptographic authorization from the designated admin address.
+
+---
+
+<a name="screenshots"></a>
+## 10. Project Media & Screenshots
+
+| Syndicate Dashboard | Capital Pooling & Deal Execution |
+| :---: | :---: |
+| *(Dashboard Preview)* | *(Deal Pool Preview)* |
+
+---
