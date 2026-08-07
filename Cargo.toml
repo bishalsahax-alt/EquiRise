@@ -5,6 +5,12 @@ members = [
     "contracts/deal_pool",
 ]
 
+[profile.dev]
+opt-level = 1
+
+[profile.test]
+opt-level = 1
+
 [profile.release]
 opt-level = "z"
 overflow-checks = true
