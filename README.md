@@ -327,8 +327,46 @@ The deployment script automatically updates `.env` with the deployed `NEXT_PUBLI
 <a name="screenshots"></a>
 ## 10. Project Media & Screenshots
 
-| Syndicate Dashboard | Capital Pooling & Deal Execution |
-| :---: | :---: |
-| *(Dashboard Preview)* | *(Deal Pool Preview)* |
+### 1. Desktop View
+High-resolution desktop dashboard showing real-time syndicate analytics, platform metrics (Total Locked Capital, Active Syndicates, Fees Collected, Yields Distributed), deal deployment sidebar, and campaign cards.
+
+![Desktop View](docs/screenshots/desktop_view.png)
+
+---
+
+### 2. Mobile Responsive View
+Fluid, responsive layout optimized for mobile screens. Ensures smooth navigation, quick deposit interactions, and status monitoring across smartphones and tablets.
+
+<p align="center">
+  <img src="docs/screenshots/mobile_view.png" alt="Mobile Responsive View" width="450" />
+</p>
+
+---
+
+### 3. Multi-Wallet Integration
+Native Web3 modal support connecting to leading Stellar wallet extensions (`Freighter`, `xBull`, `LOBSTR`, `Hana`) via `@creit.tech/stellar-wallets-kit`.
+
+![Multi Wallet Integration](docs/screenshots/multi_wallet.png)
+
+---
+
+### 4. Deployed Testnet Transaction
+On-chain transaction execution verified on Stellar Expert Testnet Explorer (`CBF3DCZXOLOQLTNKVY4UPCC5KTTANOIT3KV3CKS7GKJI3SHX5JPFGM6M`), displaying Soroban contract invocation details and USDC asset movements.
+
+![Deployed Testnet Transaction](docs/screenshots/testnet_transaction.png)
+
+---
+
+### 5. CI/CD Pipeline
+Automated GitHub Actions workflow (`.github/workflows/ci.yml`) validating Rust Cargo unit tests, Soroban WASM contract compilation, Vitest suite execution, and Next.js production builds.
+
+![CI/CD Pipeline](docs/screenshots/cicd_pipeline.png)
+
+---
+
+### 6. Test Output
+Terminal execution suite output demonstrating clean passing results across Cargo smart contract unit tests, Vitest component/integration tests, and production build checks.
+
+![Test Output](docs/screenshots/test_output.png)
 
 ---
