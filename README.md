@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <a href="https://equirise.vercel.app/" target="_blank">
-    <img src="https://img.shields.io/badge/LIVE_DEMO-EQUIRISE.VERCEL.APP-cyan?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+  <a href="https://equi-rise-ashen.vercel.app/" target="_blank">
+    <img src="https://img.shields.io/badge/LIVE_DEMO-EQUI--RISE--ASHEN.VERCEL.APP-cyan?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
   </a>
 </p>
 
