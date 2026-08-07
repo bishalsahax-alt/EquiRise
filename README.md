@@ -337,34 +337,39 @@ High-resolution desktop interface showcasing the EquiRise Gateway platform hero 
 ### 2. Mobile Responsive View
 Fluid, responsive mobile layout optimized for mobile screens. Features touch-friendly navigation, mobile network switcher (Testnet / Standalone), instant action buttons, and wallet connection controls.
 
-![Mobile Responsive View](docs/screenshots/mobile_view.png)
+<img width="720" height="1600" alt="image" src="https://github.com/user-attachments/assets/5acb2c4b-707f-4ea0-99e9-c8d42ef7616e" />
+
 
 ---
 
 ### 3. Multi-Wallet Integration
 Native Web3 modal support connecting to leading Stellar wallet extensions (`Freighter`, `xBull`, `LOBSTR`, `Hana`) via `@creit.tech/stellar-wallets-kit`.
 
-![Multi Wallet Integration](docs/screenshots/multi_wallet.png)
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/d9ab8d20-3db0-4556-a396-ecd0f5bd46fc" />
+
 
 ---
 
 ### 4. Deployed Testnet Transaction
 On-chain transaction execution verified on Stellar Expert Testnet Explorer (`CBF3DCZXOLOQLTNKVY4UPCC5KTTANOIT3KV3CKS7GKJI3SHX5JPFGM6M`), displaying Soroban contract invocation details and USDC asset movements.
 
-![Deployed Testnet Transaction](docs/screenshots/testnet_transaction.png)
+<img width="1600" height="775" alt="WhatsApp Image 2026-07-12 at 02 13 26" src="https://github.com/user-attachments/assets/9a31684c-a680-4505-af04-849986341201" />
+
 
 ---
 
 ### 5. CI/CD Pipeline
 Automated GitHub Actions workflow (`.github/workflows/ci.yml`) validating Rust Cargo unit tests, Soroban WASM contract compilation, Vitest suite execution, and Next.js production builds.
 
-![CI/CD Pipeline](docs/screenshots/cicd_pipeline.png)
+<img width="1895" height="702" alt="image" src="https://github.com/user-attachments/assets/76d1b3db-6e0e-4341-b2c2-02873e9cba82" />
+
 
 ---
 
 ### 6. Test Output
 Terminal execution suite output demonstrating clean passing results across Cargo smart contract unit tests, Vitest component/integration tests, and production build checks.
 
-![Test Output](docs/screenshots/test_output.png)
+<img width="852" height="180" alt="image" src="https://github.com/user-attachments/assets/be0bfeb3-2803-4a43-85f4-22afda4bcd55" />
+
 
 ---
