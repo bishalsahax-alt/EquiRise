@@ -15,7 +15,8 @@ import {
   XCircle,
   HelpCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  X
 } from "lucide-react";
 
 export type ExtendedPoolMetadata = PoolMetadata & { name?: string };
@@ -133,9 +134,16 @@ export default function DashboardPage() {
     }
   };
 
-  // Check lead status
+  // Check lead status and USDC readiness
   useEffect(() => {
     if (isConnected && publicKey) {
+      try {
+        if (localStorage.getItem(`equirise_usdc_ready_${publicKey}`) === "true") {
+          setUsdcReady(true);
+        }
+      } catch {
+        // Ignore storage access error
+      }
       ContractService.isLead(publicKey)
         .then((res) => setIsApprovedLead(res))
         .catch(() => setIsApprovedLead(false));
@@ -143,6 +151,17 @@ export default function DashboardPage() {
       setIsApprovedLead(null);
     }
   }, [isConnected, publicKey]);
+
+  const handleDismissUsdcBanner = () => {
+    setUsdcReady(true);
+    if (publicKey) {
+      try {
+        localStorage.setItem(`equirise_usdc_ready_${publicKey}`, "true");
+      } catch {
+        // Ignore
+      }
+    }
+  };
 
   const handleRegisterLead = async () => {
     if (!publicKey) return;
@@ -165,9 +184,9 @@ export default function DashboardPage() {
     try {
       await ContractService.setupUsdcTrustline();
       await ContractService.requestTestUsdc(publicKey);
-      setUsdcReady(true);
-    } catch (err: any) {
-      setUsdcError(err.message || "Failed to setup USDC trustline.");
+      handleDismissUsdcBanner();
+    } catch {
+      handleDismissUsdcBanner();
     } finally {
       setSettingUpUsdc(false);
     }
@@ -288,6 +307,7 @@ export default function DashboardPage() {
         return p;
       });
       savePools(updated);
+      handleDismissUsdcBanner();
 
       setDepositAmount("");
       setActivePoolForm(null);
@@ -438,8 +458,15 @@ export default function DashboardPage() {
 
       {/* USDC Testnet Setup Banner */}
       {isConnected && !usdcReady && (
-        <div className="glass-panel rounded-2xl border border-amber-500/30 p-5 space-y-3 bg-amber-950/20">
-          <div className="flex items-center gap-3">
+        <div className="glass-panel rounded-2xl border border-amber-500/30 p-5 space-y-3 bg-amber-950/20 relative">
+          <button
+            onClick={handleDismissUsdcBanner}
+            className="absolute top-4 right-4 text-amber-400/70 hover:text-amber-300 transition-all p-1"
+            title="Dismiss Setup Banner"
+          >
+            <X size={16} />
+          </button>
+          <div className="flex items-center gap-3 pr-8">
             <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl">
               <Coins size={20} />
             </div>
@@ -456,23 +483,31 @@ export default function DashboardPage() {
               {usdcError}
             </div>
           )}
-          <button
-            onClick={handleSetupUsdc}
-            disabled={settingUpUsdc}
-            className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {settingUpUsdc ? (
-              <>
-                <span className="animate-spin">⏳</span>
-                Setting up USDC (sign the wallet prompt)...
-              </>
-            ) : (
-              <>
-                <Coins size={14} />
-                Setup USDC Trustline &amp; Get Test Tokens
-              </>
-            )}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleSetupUsdc}
+              disabled={settingUpUsdc}
+              className="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {settingUpUsdc ? (
+                <>
+                  <span className="animate-spin">⏳</span>
+                  Setting up USDC...
+                </>
+              ) : (
+                <>
+                  <Coins size={14} />
+                  Setup USDC Trustline &amp; Get Test Tokens
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleDismissUsdcBanner}
+              className="bg-secondary/80 hover:bg-secondary text-white font-semibold px-4 py-2.5 rounded-xl text-xs border border-border transition-all"
+            >
+              Dismiss
+            </button>
+          </div>
         </div>
       )}
 
