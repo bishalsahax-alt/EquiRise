@@ -337,9 +337,7 @@ High-resolution desktop interface showcasing the EquiRise Gateway platform hero 
 ### 2. Mobile Responsive View
 Fluid, responsive mobile layout optimized for mobile screens. Features touch-friendly navigation, mobile network switcher (Testnet / Standalone), instant action buttons, and wallet connection controls.
 
-<p align="center">
-  <img src="docs/screenshots/mobile_view.png" alt="Mobile Responsive View" width="360" />
-</p>
+![Mobile Responsive View](docs/screenshots/mobile_view.png)
 
 ---
 
