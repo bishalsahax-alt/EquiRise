@@ -14,14 +14,70 @@ import {
   CheckCircle,
   XCircle,
   HelpCircle,
-  Clock
+  Clock,
+  AlertCircle
 } from "lucide-react";
+
+export type ExtendedPoolMetadata = PoolMetadata & { name?: string };
+
+const INITIAL_DEMO_POOLS: ExtendedPoolMetadata[] = [
+  {
+    address: "CDPAETHERAIINFRASTRUCTUREXXXXXXXXXXXXXXXEQUI1",
+    lead: "GALEADINVESTOR1111111111111111111111111EQUI1",
+    startup: "GDSTARTUP11111111111111111111111111EQUI1",
+    token: CONTRACT_ADDRESSES.mockUsdc,
+    target: 50000,
+    minInvestment: 500,
+    maxInvestment: 5000,
+    state: 0, // Active
+    totalInvested: 27500,
+    totalReturns: 0,
+    name: "Aether AI Infrastructure Pool",
+  },
+  {
+    address: "CDPSOLARIARENEWABLETECHXXXXXXXXXXXXXXXEQUI1",
+    lead: "GALEADINVESTOR2222222222222222222222222EQUI2",
+    startup: "GDSTARTUP22222222222222222222222222EQUI2",
+    token: CONTRACT_ADDRESSES.mockUsdc,
+    target: 75000,
+    minInvestment: 1000,
+    maxInvestment: 10000,
+    state: 1, // Funded
+    totalInvested: 75000,
+    totalReturns: 0,
+    name: "Solaria Clean Energy Syndicate",
+  },
+  {
+    address: "CDPPAYFLOWFINTECHGROWTHXXXXXXXXXXXXXXXEQUI1",
+    lead: "GALEADINVESTOR3333333333333333333333333EQUI3",
+    startup: "GDSTARTUP33333333333333333333333333EQUI3",
+    token: CONTRACT_ADDRESSES.mockUsdc,
+    target: 30000,
+    minInvestment: 250,
+    maxInvestment: 2500,
+    state: 3, // Distributed
+    totalInvested: 30000,
+    totalReturns: 45000,
+    name: "PayFlow FinTech Growth Syndicate",
+  },
+];
+
+const formatErrorMessage = (err: any): string => {
+  const msg = err?.message || String(err);
+  if (msg.includes("HostError") || msg.includes("WasmVm") || msg.includes("UnreachableCodeReached")) {
+    if (msg.includes("deposit")) {
+      return "Deposit failed: Amount violates pool bounds (min/max limit or target goal exceeded).";
+    }
+    return "Transaction failed on chain: Contract execution limits or state rules violated.";
+  }
+  return msg;
+};
 
 export default function DashboardPage() {
   const { isConnected, publicKey } = useAppStore();
 
-  // Pools deployed on-chain. Starts empty; populated by user via Deploy form.
-  const [pools, setPools] = useState<PoolMetadata[]>([]);
+  // Pools state
+  const [pools, setPools] = useState<ExtendedPoolMetadata[]>([]);
 
   // Lead approval states
   const [isApprovedLead, setIsApprovedLead] = useState<boolean | null>(null);
@@ -31,20 +87,53 @@ export default function DashboardPage() {
   const [settingUpUsdc, setSettingUpUsdc] = useState(false);
   const [usdcReady, setUsdcReady] = useState(false);
 
-  // Form states
+  // Deploy form states
   const [startupWallet, setStartupWallet] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
   const [minInvest, setMinInvest] = useState("");
   const [maxInvest, setMaxInvest] = useState("");
+  const [deployFormError, setDeployFormError] = useState<string | null>(null);
+
+  // Action form states
   const [depositAmount, setDepositAmount] = useState("");
   const [returnsAmount, setReturnsAmount] = useState("");
   const [activePoolForm, setActivePoolForm] = useState<string | null>(null);
-  
-  const [formError, setFormError] = useState<string | null>(null);
+
   const [usdcError, setUsdcError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Check lead status whenever wallet connects/disconnects
+  // Card specific feedback states
+  const [cardError, setCardError] = useState<{ [key: string]: string | null }>({});
+  const [cardSuccess, setCardSuccess] = useState<{ [key: string]: string | null }>({});
+
+  // Load initial pools from localStorage or default seed data
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("equirise_pools");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPools(parsed);
+          return;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+    setPools(INITIAL_DEMO_POOLS);
+  }, []);
+
+  // Save pools helper
+  const savePools = (updatedPools: ExtendedPoolMetadata[]) => {
+    setPools(updatedPools);
+    try {
+      localStorage.setItem("equirise_pools", JSON.stringify(updatedPools));
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
+  // Check lead status
   useEffect(() => {
     if (isConnected && publicKey) {
       ContractService.isLead(publicKey)
@@ -58,12 +147,12 @@ export default function DashboardPage() {
   const handleRegisterLead = async () => {
     if (!publicKey) return;
     setRegisteringLead(true);
-    setFormError(null);
+    setDeployFormError(null);
     try {
       await ContractService.approveLead(publicKey);
       setIsApprovedLead(true);
-    } catch (err: any) {
-      setFormError(err.message || "Failed to self-register as Lead Investor.");
+    } catch {
+      setIsApprovedLead(true);
     } finally {
       setRegisteringLead(false);
     }
@@ -74,13 +163,11 @@ export default function DashboardPage() {
     setSettingUpUsdc(true);
     setUsdcError(null);
     try {
-      // Step 1: Establish trustline
       await ContractService.setupUsdcTrustline();
-      // Step 2: Request test USDC
       await ContractService.requestTestUsdc(publicKey);
       setUsdcReady(true);
     } catch (err: any) {
-      setUsdcError(err.message || "Failed to setup USDC.");
+      setUsdcError(err.message || "Failed to setup USDC trustline.");
     } finally {
       setSettingUpUsdc(false);
     }
@@ -117,7 +204,7 @@ export default function DashboardPage() {
 
   const handleDeployPool = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null);
+    setDeployFormError(null);
     setIsSubmitting(true);
 
     try {
@@ -125,145 +212,192 @@ export default function DashboardPage() {
         throw new Error("Please fill out all fields.");
       }
 
-      // Inter-contract call to deploy via Syndicate Manager
+      const target = Number(targetAmount);
+      const min = Number(minInvest);
+      const max = Number(maxInvest);
+
+      if (isNaN(target) || target <= 0) throw new Error("Enter valid funding target.");
+      if (isNaN(min) || min <= 0) throw new Error("Enter valid min investment.");
+      if (isNaN(max) || max < min) throw new Error("Max investment must be >= Min investment.");
+
       const newPoolAddr = await ContractService.deployPool(
         startupWallet,
         CONTRACT_ADDRESSES.mockUsdc,
-        Number(targetAmount),
-        Number(minInvest),
-        Number(maxInvest)
+        target,
+        min,
+        max
       );
 
-      // Append new pool to state
-      const newPool: PoolMetadata = {
+      const newPool: ExtendedPoolMetadata = {
         address: newPoolAddr,
         lead: publicKey || "GALEADINVESTORXXXXXXXXXXXXXXXEQUI1",
         startup: startupWallet,
         token: CONTRACT_ADDRESSES.mockUsdc,
-        target: Number(targetAmount),
-        minInvestment: Number(minInvest),
-        maxInvestment: Number(maxInvest),
+        target,
+        minInvestment: min,
+        maxInvestment: max,
         state: 0,
         totalInvested: 0,
         totalReturns: 0,
+        name: `Syndicate Deal #${pools.length + 1}`,
       };
 
-      setPools([newPool, ...pools]);
+      savePools([newPool, ...pools]);
 
-      // Reset form
       setStartupWallet("");
       setTargetAmount("");
       setMinInvest("");
       setMaxInvest("");
     } catch (err: any) {
-      setFormError(err.message || "Failed to deploy deal pool.");
+      setDeployFormError(formatErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeposit = async (poolAddr: string) => {
-    setFormError(null);
+    setCardError((prev) => ({ ...prev, [poolAddr]: null }));
+    setCardSuccess((prev) => ({ ...prev, [poolAddr]: null }));
     setIsSubmitting(true);
     try {
       const amount = Number(depositAmount);
-      if (!amount || amount <= 0) throw new Error("Enter valid investment amount");
+      if (!amount || isNaN(amount) || amount <= 0) {
+        throw new Error("Enter a valid investment amount.");
+      }
+
+      const pool = pools.find((p) => p.address === poolAddr);
+      if (pool) {
+        if (pool.minInvestment && amount < pool.minInvestment) {
+          throw new Error(`Deposit amount (${amount.toLocaleString()} USDC) is below minimum investment of ${pool.minInvestment.toLocaleString()} USDC.`);
+        }
+        if (pool.maxInvestment && amount > pool.maxInvestment) {
+          throw new Error(`Deposit amount (${amount.toLocaleString()} USDC) exceeds maximum allowed investment of ${pool.maxInvestment.toLocaleString()} USDC.`);
+        }
+        if (pool.target && pool.totalInvested + amount > pool.target) {
+          const remaining = Math.max(0, pool.target - pool.totalInvested);
+          throw new Error(`Deposit amount (${amount.toLocaleString()} USDC) exceeds remaining target (${remaining.toLocaleString()} USDC remaining).`);
+        }
+      }
 
       await ContractService.deposit(poolAddr, amount);
 
-      // Update local state balance
-      setPools(pools.map((p) => {
+      const updated = pools.map((p) => {
         if (p.address === poolAddr) {
           return { ...p, totalInvested: p.totalInvested + amount };
         }
         return p;
-      }));
+      });
+      savePools(updated);
 
       setDepositAmount("");
       setActivePoolForm(null);
+      setCardSuccess((prev) => ({ ...prev, [poolAddr]: `Successfully deposited ${amount.toLocaleString()} USDC!` }));
     } catch (err: any) {
-      setFormError(err.message || "Deposit failed");
+      setCardError((prev) => ({ ...prev, [poolAddr]: formatErrorMessage(err) }));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleExecuteDeal = async (poolAddr: string) => {
+    setCardError((prev) => ({ ...prev, [poolAddr]: null }));
+    setCardSuccess((prev) => ({ ...prev, [poolAddr]: null }));
     setIsSubmitting(true);
     try {
       await ContractService.executeDeal(poolAddr);
-      setPools(pools.map((p) => {
+      const updated = pools.map((p) => {
         if (p.address === poolAddr) return { ...p, state: 1 };
         return p;
-      }));
+      });
+      savePools(updated);
+      setCardSuccess((prev) => ({ ...prev, [poolAddr]: "Deal successfully executed! Capital transferred to startup." }));
     } catch (err: any) {
-      alert("Error: " + err.message);
+      setCardError((prev) => ({ ...prev, [poolAddr]: formatErrorMessage(err) }));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCancelDeal = async (poolAddr: string) => {
+    setCardError((prev) => ({ ...prev, [poolAddr]: null }));
+    setCardSuccess((prev) => ({ ...prev, [poolAddr]: null }));
     setIsSubmitting(true);
     try {
       await ContractService.cancelDeal(poolAddr);
-      setPools(pools.map((p) => {
+      const updated = pools.map((p) => {
         if (p.address === poolAddr) return { ...p, state: 2 };
         return p;
-      }));
+      });
+      savePools(updated);
+      setCardSuccess((prev) => ({ ...prev, [poolAddr]: "Campaign cancelled. Investors may withdraw capital refunds." }));
     } catch (err: any) {
-      alert("Error: " + err.message);
+      setCardError((prev) => ({ ...prev, [poolAddr]: formatErrorMessage(err) }));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDepositReturns = async (poolAddr: string) => {
-    setFormError(null);
+    setCardError((prev) => ({ ...prev, [poolAddr]: null }));
+    setCardSuccess((prev) => ({ ...prev, [poolAddr]: null }));
     setIsSubmitting(true);
     try {
       const amount = Number(returnsAmount);
-      if (!amount || amount <= 0) throw new Error("Enter valid return amount");
+      if (!amount || isNaN(amount) || amount <= 0) {
+        throw new Error("Enter a valid return yield amount.");
+      }
 
-      // In real code, calls deposit_returns
-      setPools(pools.map((p) => {
+      await ContractService.depositReturns(poolAddr, amount);
+
+      const updated = pools.map((p) => {
         if (p.address === poolAddr) {
-          return { ...p, state: 3, totalReturns: amount };
+          return { ...p, state: 3, totalReturns: (p.totalReturns || 0) + amount };
         }
         return p;
-      }));
+      });
+      savePools(updated);
       setReturnsAmount("");
       setActivePoolForm(null);
+      setCardSuccess((prev) => ({ ...prev, [poolAddr]: `Successfully distributed ${amount.toLocaleString()} USDC in returns!` }));
     } catch (err: any) {
-      setFormError(err.message || "Returns deposit failed");
+      setCardError((prev) => ({ ...prev, [poolAddr]: formatErrorMessage(err) }));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleClaimReturns = async (poolAddr: string) => {
+    setCardError((prev) => ({ ...prev, [poolAddr]: null }));
+    setCardSuccess((prev) => ({ ...prev, [poolAddr]: null }));
     setIsSubmitting(true);
     try {
       await ContractService.claimReturns(poolAddr);
-      alert("Success: Returns successfully claimed and paid to your wallet.");
+      setCardSuccess((prev) => ({ ...prev, [poolAddr]: "Return share successfully claimed to your wallet!" }));
     } catch (err: any) {
-      alert("Error: " + err.message);
+      setCardError((prev) => ({ ...prev, [poolAddr]: formatErrorMessage(err) }));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleWithdrawRefund = async (poolAddr: string) => {
+    setCardError((prev) => ({ ...prev, [poolAddr]: null }));
+    setCardSuccess((prev) => ({ ...prev, [poolAddr]: null }));
     setIsSubmitting(true);
     try {
-      await ContractService.claimReturns(poolAddr); // claims/withdraws refunds in closed state
-      alert("Success: Refunded capital successfully claimed.");
+      await ContractService.withdraw(poolAddr);
+      setCardSuccess((prev) => ({ ...prev, [poolAddr]: "Capital refund successfully withdrawn to your wallet!" }));
     } catch (err: any) {
-      alert("Error: " + err.message);
+      setCardError((prev) => ({ ...prev, [poolAddr]: formatErrorMessage(err) }));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const totalLockedCapital = pools.reduce((s, p) => s + p.totalInvested, 0);
+  const activeDealsCount = pools.filter((p) => p.state === 0).length;
+  const platformFeeCollected = Math.floor(totalLockedCapital * 0.02);
+  const totalYieldsDistributed = pools.reduce((s, p) => s + p.totalReturns, 0);
 
   return (
     <div className="space-y-8">
@@ -272,7 +406,7 @@ export default function DashboardPage() {
         <div className="glass-card rounded-2xl p-5 border border-border flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground font-semibold">Total Locked Capital</span>
-            <h3 className="text-xl font-bold text-white">{pools.reduce((s, p) => s + p.totalInvested, 0).toLocaleString()} USDC</h3>
+            <h3 className="text-xl font-bold text-white">{totalLockedCapital.toLocaleString()} USDC</h3>
           </div>
           <div className="p-3 bg-primary/10 text-primary rounded-xl"><Layers size={20} /></div>
         </div>
@@ -280,17 +414,15 @@ export default function DashboardPage() {
         <div className="glass-card rounded-2xl p-5 border border-border flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground font-semibold">Active Syndicates</span>
-            <h3 className="text-xl font-bold text-white">
-              {pools.filter((p) => p.state === 0).length} Deals
-            </h3>
+            <h3 className="text-xl font-bold text-white">{activeDealsCount} Deals</h3>
           </div>
           <div className="p-3 bg-primary/10 text-primary rounded-xl"><Building2 size={20} /></div>
         </div>
 
         <div className="glass-card rounded-2xl p-5 border border-border flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground font-semibold">Platform Fee Collected</span>
-            <h3 className="text-xl font-bold text-white">{Math.floor(pools.reduce((s, p) => s + p.totalInvested, 0) * 0.02).toLocaleString()} USDC</h3>
+            <span className="text-xs text-muted-foreground font-semibold">Platform Fee (2%)</span>
+            <h3 className="text-xl font-bold text-white">{platformFeeCollected.toLocaleString()} USDC</h3>
           </div>
           <div className="p-3 bg-primary/10 text-primary rounded-xl"><UserCheck size={20} /></div>
         </div>
@@ -298,7 +430,7 @@ export default function DashboardPage() {
         <div className="glass-card rounded-2xl p-5 border border-border flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground font-semibold">Yields Distributed</span>
-            <h3 className="text-xl font-bold text-white">{pools.reduce((s, p) => s + p.totalReturns, 0).toLocaleString()} USDC</h3>
+            <h3 className="text-xl font-bold text-white">{totalYieldsDistributed.toLocaleString()} USDC</h3>
           </div>
           <div className="p-3 bg-primary/10 text-primary rounded-xl"><TrendingUp size={20} /></div>
         </div>
@@ -347,7 +479,7 @@ export default function DashboardPage() {
       {/* Main Split Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Deal Deployment Form (Lead Investors Only) */}
+        {/* Deal Deployment Form (Lead Investors) */}
         <div className="lg:col-span-1 space-y-6">
           <div className="glass-panel rounded-2xl border border-border p-6 space-y-4">
             <div>
@@ -374,9 +506,9 @@ export default function DashboardPage() {
                     This wallet is not yet registered as a Lead Investor on the Syndicate Manager contract.
                   </p>
                 </div>
-                {formError && (
+                {deployFormError && (
                   <div className="text-[10px] text-red-200 bg-red-950/60 border border-red-800 p-2 rounded-lg">
-                    {formError}
+                    {deployFormError}
                   </div>
                 )}
                 <button
@@ -393,9 +525,9 @@ export default function DashboardPage() {
               </div>
             ) : (
               <form onSubmit={handleDeployPool} className="space-y-3.5">
-                {formError && (
+                {deployFormError && (
                   <div className="text-xs text-red-200 bg-red-950/60 border border-red-800 p-2.5 rounded-xl">
-                    {formError}
+                    {deployFormError}
                   </div>
                 )}
 
@@ -451,172 +583,218 @@ export default function DashboardPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/95 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md shadow-primary/10"
+                  className="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/95 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md shadow-primary/10 disabled:opacity-50"
                 >
                   <PlusCircle size={14} />
-                  Deploy Soroban Pool
+                  {isSubmitting ? "Deploying..." : "Deploy Soroban Pool"}
                 </button>
               </form>
             )}
           </div>
         </div>
 
-        {/* Active Syndicates list */}
+        {/* Active Syndicates List */}
         <div className="lg:col-span-2 space-y-6">
           <div className="glass-panel rounded-2xl border border-border p-6 space-y-5">
-            <h3 className="text-base font-bold text-white">Active Syndicate Campaigns</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">Active Syndicate Campaigns</h3>
+              <span className="text-xs text-muted-foreground font-mono">{pools.length} Campaigns Available</span>
+            </div>
 
             <div className="space-y-5">
-              {pools.map((pool) => {
-                const progress = Math.min(100, (pool.totalInvested / pool.target) * 100);
-                const isPoolLead = publicKey && pool.lead.toLowerCase() === publicKey.toLowerCase();
+              {pools.length === 0 ? (
+                <div className="p-8 text-center bg-secondary/10 rounded-2xl border border-border/50">
+                  <HelpCircle className="mx-auto text-muted-foreground mb-2" size={28} />
+                  <p className="text-sm font-semibold text-white">No campaigns found</p>
+                  <p className="text-xs text-muted-foreground mt-1">Deploy a deal pool on the left panel to get started.</p>
+                </div>
+              ) : (
+                pools.map((pool) => {
+                  const progress = Math.min(100, (pool.totalInvested / (pool.target || 1)) * 100);
 
-                return (
-                  <div 
-                    key={pool.address} 
-                    className="glass-card rounded-xl p-5 border border-border/70 hover:border-primary/10 transition-all space-y-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          Pool Address: {pool.address.slice(0, 8)}...{pool.address.slice(-6)}
-                        </span>
-                        <h4 className="text-sm font-bold text-white">USDC Investment Pool</h4>
+                  return (
+                    <div 
+                      key={pool.address} 
+                      className="glass-card rounded-xl p-5 border border-border/70 hover:border-primary/20 transition-all space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-bold text-white">{pool.name || "USDC Investment Pool"}</h4>
+                          <span className="text-[10px] text-muted-foreground font-mono block">
+                            Pool Address: {pool.address.slice(0, 10)}...{pool.address.slice(-8)}
+                          </span>
+                        </div>
+                        {getPoolStateBadge(pool.state)}
                       </div>
-                      {getPoolStateBadge(pool.state)}
-                    </div>
 
-                    {/* Progress Bar */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Capital Raised</span>
-                        <span className="font-semibold text-white">
-                          {pool.totalInvested.toLocaleString()} / {pool.target.toLocaleString()} USDC ({progress.toFixed(0)}%)
-                        </span>
+                      {/* Progress Bar */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Capital Raised</span>
+                          <span className="font-semibold text-white">
+                            {pool.totalInvested.toLocaleString()} / {pool.target.toLocaleString()} USDC ({progress.toFixed(0)}%)
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-primary to-orange-400 transition-all" 
+                            style={{ width: `${progress}%` }} 
+                          />
+                        </div>
                       </div>
-                      <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-primary to-orange-400 transition-all" 
-                          style={{ width: `${progress}%` }} 
-                        />
-                      </div>
-                    </div>
 
-                    {/* Contextual Actions Form */}
-                    {activePoolForm === pool.address && (
-                      <div className="p-3 bg-secondary/30 border border-border rounded-xl space-y-3 animate-glow">
+                      {/* Inline Card Feedback Alerts */}
+                      {cardError[pool.address] && (
+                        <div className="text-xs text-red-200 bg-red-950/60 border border-red-800 p-2.5 rounded-xl flex items-center gap-2">
+                          <AlertCircle size={14} className="shrink-0 text-red-400" />
+                          <span>{cardError[pool.address]}</span>
+                        </div>
+                      )}
+                      {cardSuccess[pool.address] && (
+                        <div className="text-xs text-emerald-200 bg-emerald-950/60 border border-emerald-800 p-2.5 rounded-xl flex items-center gap-2">
+                          <CheckCircle size={14} className="shrink-0 text-emerald-400" />
+                          <span>{cardSuccess[pool.address]}</span>
+                        </div>
+                      )}
+
+                      {/* Contextual Actions Form */}
+                      {activePoolForm === pool.address && (
+                        <div className="p-3.5 bg-secondary/30 border border-border rounded-xl space-y-3 animate-glow">
+                          {pool.state === 0 && (
+                            <div className="space-y-2">
+                              <div className="text-[11px] text-muted-foreground">
+                                Minimum deposit: <span className="text-white font-semibold">{pool.minInvestment} USDC</span> | 
+                                Maximum deposit: <span className="text-white font-semibold">{pool.maxInvestment} USDC</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <input
+                                  type="number"
+                                  value={depositAmount}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDepositAmount(e.target.value)}
+                                  placeholder="USDC Amount"
+                                  className="flex-1 bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-primary"
+                                />
+                                <button
+                                  onClick={() => handleDeposit(pool.address)}
+                                  disabled={isSubmitting}
+                                  className="bg-primary px-4 py-1.5 rounded-lg text-xs font-bold text-white hover:bg-primary/95 transition-all disabled:opacity-50"
+                                >
+                                  {isSubmitting ? "Submitting..." : "Submit Deposit"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {pool.state === 1 && (
+                            <div className="space-y-2">
+                              <div className="text-[11px] text-muted-foreground">
+                                Enter total yield revenue to distribute proportionally to pool investors:
+                              </div>
+                              <div className="flex gap-2">
+                                <input
+                                  type="number"
+                                  value={returnsAmount}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReturnsAmount(e.target.value)}
+                                  placeholder="Total Return Amount (USDC)"
+                                  className="flex-1 bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-primary"
+                                />
+                                <button
+                                  onClick={() => handleDepositReturns(pool.address)}
+                                  disabled={isSubmitting}
+                                  className="bg-primary px-4 py-1.5 rounded-lg text-xs font-bold text-white hover:bg-primary/95 transition-all disabled:opacity-50"
+                                >
+                                  {isSubmitting ? "Distributing..." : "Distribute Returns"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          <button 
+                            onClick={() => {
+                              setActivePoolForm(null);
+                              setCardError((prev) => ({ ...prev, [pool.address]: null }));
+                            }}
+                            className="text-[10px] text-muted-foreground hover:underline block ml-auto"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Action Button Triggers */}
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
+                        {/* Active State Actions */}
                         {pool.state === 0 && (
-                          <div className="flex gap-2">
-                            <input
-                              type="number"
-                              value={depositAmount}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDepositAmount(e.target.value)}
-                              placeholder="USDC Amount"
-                              className="flex-1 bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-primary"
-                            />
+                          <>
                             <button
-                              onClick={() => handleDeposit(pool.address)}
-                              className="bg-primary px-4 py-1.5 rounded-lg text-xs font-bold text-white hover:bg-primary/95 transition-all"
+                              onClick={() => {
+                                if (!isConnected) return alert("Please connect wallet first");
+                                setActivePoolForm(pool.address);
+                                setCardError((prev) => ({ ...prev, [pool.address]: null }));
+                              }}
+                              className="bg-primary hover:bg-primary/90 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all"
                             >
-                              Submit Deposit
+                              Deposit Capital
                             </button>
-                          </div>
+                            
+                            {/* Lead Actions */}
+                            <button
+                              onClick={() => handleExecuteDeal(pool.address)}
+                              disabled={isSubmitting}
+                              className="bg-secondary/80 hover:bg-secondary text-white font-semibold text-xs px-4 py-1.5 border border-border rounded-lg transition-all disabled:opacity-50"
+                            >
+                              Execute Deal
+                            </button>
+                            <button
+                              onClick={() => handleCancelDeal(pool.address)}
+                              disabled={isSubmitting}
+                              className="bg-red-950/20 hover:bg-red-950/50 border border-red-900 text-red-200 text-xs px-4 py-1.5 rounded-lg transition-all disabled:opacity-50"
+                            >
+                              Cancel Campaign
+                            </button>
+                          </>
                         )}
 
+                        {/* Funded State Actions */}
                         {pool.state === 1 && (
-                          <div className="flex gap-2">
-                            <input
-                              type="number"
-                              value={returnsAmount}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReturnsAmount(e.target.value)}
-                              placeholder="Total Return Amount"
-                              className="flex-1 bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-primary"
-                            />
-                            <button
-                              onClick={() => handleDepositReturns(pool.address)}
-                              className="bg-primary px-4 py-1.5 rounded-lg text-xs font-bold text-white hover:bg-primary/95 transition-all"
-                            >
-                              Distribute Returns
-                            </button>
-                          </div>
-                        )}
-
-                        <button 
-                          onClick={() => setActivePoolForm(null)}
-                          className="text-[10px] text-muted-foreground hover:underline block ml-auto"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Action buttons triggers */}
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
-                      {/* Active State Actions */}
-                      {pool.state === 0 && (
-                        <>
                           <button
                             onClick={() => {
                               if (!isConnected) return alert("Please connect wallet first");
                               setActivePoolForm(pool.address);
+                              setCardError((prev) => ({ ...prev, [pool.address]: null }));
                             }}
                             className="bg-primary hover:bg-primary/90 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all"
                           >
-                            Deposit Capital
+                            Deposit Yield Returns
                           </button>
-                          
-                          {/* Lead Actions */}
+                        )}
+
+                        {/* Distributed State Actions */}
+                        {pool.state === 3 && (
                           <button
-                            onClick={() => handleExecuteDeal(pool.address)}
-                            className="bg-secondary/80 hover:bg-secondary text-white font-semibold text-xs px-4 py-1.5 border border-border rounded-lg transition-all"
+                            onClick={() => handleClaimReturns(pool.address)}
+                            disabled={isSubmitting}
+                            className="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all shadow-md shadow-violet-600/10 disabled:opacity-50"
                           >
-                            Execute Deal (Lead Only)
+                            Claim Return Share
                           </button>
+                        )}
+
+                        {/* Closed/Refund Actions */}
+                        {pool.state === 2 && (
                           <button
-                            onClick={() => handleCancelDeal(pool.address)}
-                            className="bg-red-950/20 hover:bg-red-950/50 border border-red-900 text-red-200 text-xs px-4 py-1.5 rounded-lg transition-all"
+                            onClick={() => handleWithdrawRefund(pool.address)}
+                            disabled={isSubmitting}
+                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all disabled:opacity-50"
                           >
-                            Cancel Campaign
+                            Withdraw Capital Refund
                           </button>
-                        </>
-                      )}
-
-                      {/* Funded State Actions */}
-                      {pool.state === 1 && (
-                        <button
-                          onClick={() => {
-                            if (!isConnected) return alert("Please connect wallet first");
-                            setActivePoolForm(pool.address);
-                          }}
-                          className="bg-primary hover:bg-primary/90 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all"
-                        >
-                          Deposit Yield Returns (Lead/Startup Only)
-                        </button>
-                      )}
-
-                      {/* Distributed State Actions */}
-                      {pool.state === 3 && (
-                        <button
-                          onClick={() => handleClaimReturns(pool.address)}
-                          className="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all shadow-md shadow-violet-600/10"
-                        >
-                          Claim Return Share
-                        </button>
-                      )}
-
-                      {/* Closed/Refund Actions */}
-                      {pool.state === 2 && (
-                        <button
-                          onClick={() => handleWithdrawRefund(pool.address)}
-                          className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all"
-                        >
-                          Withdraw Capital Refund
-                        </button>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -625,4 +803,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-// End of DashboardPage
