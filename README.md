@@ -25,14 +25,13 @@
   <a href="#development">Development</a> •
   <a href="#deployment-guide">Deployment Guide</a> •
   <a href="#verification">Verification</a> •
-  <a href="#security">Security</a> •
-  <a href="#screenshots">Screenshots</a>
+  <a href="#security">Security</a>
 </p>
 
 ---
 
 * **GitHub Repository:** [bishalsahax-alt/EquiRise](https://github.com/bishalsahax-alt/EquiRise)
-* **Walkthrough Demo Video:** [Link to Walkthrough Video]
+* **Walkthrough Demo Video:** [View Demonstration](https://github.com/bishalsahax-alt/EquiRise)
 
 ---
 
@@ -44,23 +43,23 @@
 * [2. Technical Stack](#tech-stack)
 * [3. Directory Structure](#directory-structure)
 * [4. Technical Architecture & Component Flow](#architecture)
-  * [1. Platform Components Diagram](#platform-components)
-  * [2. Inter-Contract Communication Flow](#inter-contract-communication)
+  * [1. Decoupled Access Control & Factory Flow](#decoupled-flow)
+  * [2. Inter-Contract Communication Sequence](#inter-contract-communication)
 * [5. Smart Contract Design](#contract-design)
-  * [Syndicate Manager (Factory Contract)](#syndicate-manager)
-  * [Deal Pool (Escrow & Execution Contract)](#deal-pool)
-  * [Data Storage & TTL Preservation](#storage-design)
-  * [Access Control & Upgradability](#access-control)
+  * [1. Syndicate Manager (Factory Contract)](#syndicate-manager)
+  * [2. Deal Pool (Escrow & Execution Contract)](#deal-pool)
+  * [3. Data Storage & TTL Preservation](#storage-design)
+  * [4. Access Control & Security](#access-control)
 * [6. Local Development & Testing](#development)
   * [Prerequisites](#prerequisites)
-  * [Compilation & Smart Contract Unit Testing](#compilation-testing)
-  * [Frontend Development & Vitest Suite](#frontend-dev)
+  * [Compilation & Testing](#compilation-testing)
+  * [Frontend Development](#frontend-dev)
 * [7. Stellar Testnet Deployment Guide](#deployment-guide)
   * [Step 1: Configure Deployer Identity](#deployer-identity)
   * [Step 2: Compile WASM Bytecodes](#compile-wasm)
   * [Step 3: Deploy Syndicate Manager](#deploy-manager)
-  * [Step 4: Deploy Deal Pool WASM Hash](#deploy-pool-wasm)
-  * [Step 5: Initialize Contracts & Environment Setup](#initialize-contracts)
+  * [Step 4: Deploy Deal Pool WASM & Register](#deploy-pool-wasm)
+  * [Step 5: Initialize Contracts & Configure Platform](#initialize-contracts)
 * [8. Deployed Contract Verification](#verification)
   * [On-Chain Contract Verification Links](#verification-links)
 * [9. Security Considerations](#security)
@@ -91,7 +90,7 @@ EquiRise resolves these structural limitations on the Stellar blockchain using:
 * **Data Querying:** React Query (RPC state status synchronization)
 * **Wallet Connection:** `@creit.tech/stellar-wallets-kit` SDK (Freighter / xBull / LOBSTR / Hana)
 * **Testing & Quality Assurance:** Vitest, React Testing Library, Cargo Unit Testing Suite
-* **Web3 Design Aesthetics:** Dark-mode aesthetic with custom neon accents, status badges, dynamic stats counters, modal dialogs, and responsive layout.
+* **Web3 Design Aesthetics:** Premium dark-mode aesthetic with custom neon accents, status badges, dynamic stats counters, modal dialogs, and responsive layout.
 
 ---
 
@@ -140,8 +139,8 @@ EquiRise/
 <a name="architecture"></a>
 ## 4. Technical Architecture & Component Flow
 
-<a name="platform-components"></a>
-### 1. Platform Components Diagram
+<a name="decoupled-flow"></a>
+### 1. Decoupled Access Control & Factory Flow
 
 ```mermaid
 graph TD
@@ -207,7 +206,7 @@ EquiRise utilizes two core smart contracts compiled to WebAssembly and executed 
 - Implements `extend_ttl` calls to ensure contract state and balance tracking keys remain active on-chain.
 
 <a name="access-control"></a>
-### 4. Access Control & Upgradability
+### 4. Access Control & Security
 - Sensitive actions (e.g. executing deals, cancelling pools, updating fee configs) require explicit `.require_auth()` signature verification.
 - Upgrades are governed by the Syndicate Manager admin through secure `upgrade` functions.
 
@@ -216,12 +215,14 @@ EquiRise utilizes two core smart contracts compiled to WebAssembly and executed 
 <a name="development"></a>
 ## 6. Local Development & Testing
 
+<a name="prerequisites"></a>
 ### Prerequisites
 * **Rust**: `v1.75.0` or higher with target `wasm32-unknown-unknown`
 * **Node.js**: `v18.0.0` or higher
 * **Stellar CLI / Soroban CLI**: Installed locally
 
-### Compilation & Smart Contract Unit Testing
+<a name="compilation-testing"></a>
+### Compilation & Testing
 
 ```bash
 # Navigate to contracts directory
@@ -234,7 +235,8 @@ cargo test
 cargo build --target wasm32-unknown-unknown --release
 ```
 
-### Frontend Development & Vitest Suite
+<a name="frontend-dev"></a>
+### Frontend Development
 
 ```bash
 # Navigate to frontend directory
@@ -276,17 +278,25 @@ cd ..
 ```
 
 <a name="deploy-manager"></a>
-### Step 3: Deploy & Initialize Syndicate Manager
+### Step 3: Deploy Syndicate Manager
 Run the automated testnet setup script to request Friendbot funding and deploy contracts:
 
 ```bash
 # Fund deployer account via Friendbot
 npm run setup:testnet
+```
 
+<a name="deploy-pool-wasm"></a>
+### Step 4: Deploy Deal Pool WASM & Register
+Deploy the contract to Stellar testnet and register the WASM hash:
+
+```bash
 # Deploy Syndicate Manager & register Deal Pool WASM Hash
 npm run deploy:testnet
 ```
 
+<a name="initialize-contracts"></a>
+### Step 5: Initialize Contracts & Configure Platform
 The deployment script automatically updates `.env` with the deployed `NEXT_PUBLIC_SYNDICATE_MANAGER_ADDRESS` and `NEXT_PUBLIC_DEAL_POOL_WASM_HASH`.
 
 ---
@@ -299,9 +309,8 @@ The deployment script automatically updates `.env` with the deployed `NEXT_PUBLI
 
 | Contract / Asset | Target Network | Deployed Address / Hash | Explorer Link |
 | :--- | :--- | :--- | :--- |
-| **Syndicate Manager** | Stellar Testnet | `CDHDAJIVBYGLEQ42ILGMIALKJEQJ4LFBCOM4OQKS7P5QMZZTSSL3S3VZ` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CDHDAJIVBYGLEQ42ILGMIALKJEQJ4LFBCOM4OQKS7P5QMZZTSSL3S3VZ) |
-| **Deal Pool WASM Hash** | Stellar Testnet | `ef5ef197536c8ced25d97a56d58813c7741b051b3af06f016d0e1ead0292f7df` | [View WASM Hash Details](https://stellar.expert/explorer/testnet) |
-| **Mock USDC Token** | Stellar Testnet | `CUSDCASSETXXXXXXTESTNETXXXXXXEQUI1` | [View Asset Details](https://stellar.expert/explorer/testnet) |
+| **Syndicate Manager** | Stellar Testnet | `CBF3DCZXOLOQLTNKVY4UPCC5KTTANOIT3KV3CKS7GKJI3SHX5JPFGM6M` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CBF3DCZXOLOQLTNKVY4UPCC5KTTANOIT3KV3CKS7GKJI3SHX5JPFGM6M) |
+| **Mock USDC Token** | Stellar Testnet | `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` | [View Asset Details](https://stellar.expert/explorer/testnet/contract/CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA) |
 
 ---
 
