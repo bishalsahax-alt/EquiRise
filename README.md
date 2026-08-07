@@ -31,7 +31,12 @@
 ---
 
 * **GitHub Repository:** [bishalsahax-alt/EquiRise](https://github.com/bishalsahax-alt/EquiRise)
-* **Walkthrough Demo Video:** [View Demonstration](https://github.com/bishalsahax-alt/EquiRise)
+* **Walkthrough Demo Video:**
+* 
+
+https://github.com/user-attachments/assets/8e9b0514-44d3-45d2-aa0c-50e18b463208
+
+
 
 ---
 
