@@ -328,7 +328,7 @@ The deployment script automatically updates `.env` with the deployed `NEXT_PUBLI
 ## 10. Project Media & Screenshots
 
 ### 1. Desktop View
-High-resolution desktop dashboard showing real-time syndicate analytics, platform metrics (Total Locked Capital, Active Syndicates, Fees Collected, Yields Distributed), deal deployment sidebar, and campaign cards.
+High-resolution desktop interface showcasing the EquiRise Gateway platform hero view, Soroban Smart Contract integration badge, network mode switcher (Testnet / Standalone), and wallet connection gateway.
 
 ![Desktop View](docs/screenshots/desktop_view.png)
 
