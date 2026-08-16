@@ -562,6 +562,40 @@ export class ContractService {
   }
 
   /**
+   * Fetch current platform fee configuration: (feeCollector, platformFeeBps)
+   */
+  static async getFeeConfig(): Promise<{ feeCollector: string; platformFeeBps: number }> {
+    try {
+      const res = await this.simulateCall(CONTRACT_ADDRESSES.manager, "get_fee_config");
+      return {
+        feeCollector: res[0],
+        platformFeeBps: Number(res[1]),
+      };
+    } catch {
+      return {
+        feeCollector: "GBFEECOLLECTORXXXXXXXXXXXXXXXEQUI1",
+        platformFeeBps: 200,
+      };
+    }
+  }
+
+  /**
+   * Update platform fee configuration (admin only).
+   */
+  static async setFeeConfig(feeCollector: string, platformFeeBps: number): Promise<void> {
+    const { nativeToScVal, Address } = await getStellarSdk();
+    const store = this.getStore();
+    const args = [
+      Address.fromString(feeCollector).toScVal(),
+      nativeToScVal(platformFeeBps, { type: "u32" }),
+    ];
+
+    const tx = await this.buildInvokeTx(CONTRACT_ADDRESSES.manager, "set_fee_config", args);
+    const signedXdr = await store.walletService.signTransaction(tx.toXDR(), store.publicKey!);
+    await store.stellarService.submitTransaction(signedXdr);
+  }
+
+  /**
    * Request self-registration/approval as a Lead Investor via the Next.js route helper.
    */
   static async approveLead(address: string): Promise<void> {
