@@ -1,6 +1,6 @@
 #![cfg(test)]
 use super::*;
-use soroban_sdk::{testutils::Address as _, Address, Env, BytesN};
+use soroban_sdk::{testutils::Address as _, Address, Env};
 
 #[test]
 fn test_manager_admin_rbac() {

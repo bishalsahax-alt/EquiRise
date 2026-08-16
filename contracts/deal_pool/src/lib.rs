@@ -1,6 +1,6 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contractclient, contractimpl, contracttype, symbol_short, Address, Env, Symbol
+    contract, contractclient, contractimpl, contracttype, symbol_short, Address, Env
 };
 
 // Define client interface for inter-contract calls to Syndicate Manager.
@@ -28,9 +28,6 @@ impl PoolState {
         }
     }
 }
-
-// Ensure the standard library imports Val for into_val conversions
-use soroban_sdk::Val;
 
 #[derive(Clone)]
 #[contracttype]

@@ -1,7 +1,7 @@
 #![cfg(test)]
 use super::*;
 use soroban_sdk::{
-    contract, contractimpl, testutils::Address as _, Address, Env, IntoVal
+    contract, contractimpl, testutils::Address as _, Address, Env
 };
 
 // Mock Syndicate Manager for inter-contract testing
