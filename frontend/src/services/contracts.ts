@@ -596,6 +596,21 @@ export class ContractService {
   }
 
   /**
+   * Fetch current investor balance in a pool (Contract: get_balance(investor))
+   */
+  static async getInvestorBalance(poolAddress: string, investorAddress: string): Promise<number> {
+    const { Address } = await getStellarSdk();
+    try {
+      const res = await this.simulateCall(poolAddress, "get_balance", [
+        Address.fromString(investorAddress).toScVal(),
+      ]);
+      return Number(res ?? 0);
+    } catch {
+      return 0;
+    }
+  }
+
+  /**
    * Request self-registration/approval as a Lead Investor via the Next.js route helper.
    */
   static async approveLead(address: string): Promise<void> {

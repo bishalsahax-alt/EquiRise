@@ -99,6 +99,7 @@ export default function DashboardPage() {
   const [depositAmount, setDepositAmount] = useState("");
   const [returnsAmount, setReturnsAmount] = useState("");
   const [activePoolForm, setActivePoolForm] = useState<string | null>(null);
+  const [investorBalances, setInvestorBalances] = useState<{ [poolAddress: string]: number }>({});
 
   const [usdcError, setUsdcError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,6 +107,28 @@ export default function DashboardPage() {
   // Card specific feedback states
   const [cardError, setCardError] = useState<{ [key: string]: string | null }>({});
   const [cardSuccess, setCardSuccess] = useState<{ [key: string]: string | null }>({});
+
+  // Fetch investor balances for connected wallet
+  useEffect(() => {
+    if (!isConnected || !publicKey) {
+      setInvestorBalances({});
+      return;
+    }
+    const loadBalances = async () => {
+      const balances: { [addr: string]: number } = {};
+      for (const pool of pools) {
+        try {
+          const bal = await ContractService.getInvestorBalance(pool.address, publicKey);
+          balances[pool.address] = bal;
+        } catch {
+          const savedBal = localStorage.getItem(`equirise_bal_${publicKey}_${pool.address}`);
+          balances[pool.address] = savedBal ? Number(savedBal) : 0;
+        }
+      }
+      setInvestorBalances(balances);
+    };
+    loadBalances();
+  }, [isConnected, publicKey, pools]);
 
   // Load initial pools from localStorage or default seed data
   useEffect(() => {
@@ -286,15 +309,25 @@ export default function DashboardPage() {
 
       const pool = pools.find((p) => p.address === poolAddr);
       if (pool) {
+        const currentBal = investorBalances[poolAddr] || 0;
+        const newTotal = currentBal + amount;
+
         if (pool.minInvestment && amount < pool.minInvestment) {
-          throw new Error(`Deposit amount (${amount.toLocaleString()} USDC) is below minimum investment of ${pool.minInvestment.toLocaleString()} USDC.`);
+          throw new Error(`Deposit rejected: Amount (${amount.toLocaleString()} USDC) is below minimum deposit of ${pool.minInvestment.toLocaleString()} USDC.`);
         }
-        if (pool.maxInvestment && amount > pool.maxInvestment) {
-          throw new Error(`Deposit amount (${amount.toLocaleString()} USDC) exceeds maximum allowed investment of ${pool.maxInvestment.toLocaleString()} USDC.`);
+
+        if (pool.maxInvestment && newTotal > pool.maxInvestment) {
+          const maxAllowedAdditional = Math.max(0, pool.maxInvestment - currentBal);
+          if (maxAllowedAdditional === 0) {
+            throw new Error(`Deposit rejected: You have already deposited ${currentBal.toLocaleString()} USDC, reaching your maximum limit of ${pool.maxInvestment.toLocaleString()} USDC for this pool.`);
+          } else {
+            throw new Error(`Deposit rejected: Adding ${amount.toLocaleString()} USDC would bring your total investment to ${newTotal.toLocaleString()} USDC, exceeding the maximum per-investor limit of ${pool.maxInvestment.toLocaleString()} USDC (Max additional deposit allowed: ${maxAllowedAdditional.toLocaleString()} USDC).`);
+          }
         }
+
         if (pool.target && pool.totalInvested + amount > pool.target) {
-          const remaining = Math.max(0, pool.target - pool.totalInvested);
-          throw new Error(`Deposit amount (${amount.toLocaleString()} USDC) exceeds remaining target (${remaining.toLocaleString()} USDC remaining).`);
+          const remainingTarget = Math.max(0, pool.target - pool.totalInvested);
+          throw new Error(`Deposit rejected: Amount (${amount.toLocaleString()} USDC) exceeds remaining pool target goal (${remainingTarget.toLocaleString()} USDC remaining).`);
         }
       }
 
@@ -307,8 +340,18 @@ export default function DashboardPage() {
         return p;
       });
       savePools(updated);
-      handleDismissUsdcBanner();
 
+      const newBal = (investorBalances[poolAddr] || 0) + amount;
+      setInvestorBalances((prev) => ({ ...prev, [poolAddr]: newBal }));
+      if (publicKey) {
+        try {
+          localStorage.setItem(`equirise_bal_${publicKey}_${poolAddr}`, String(newBal));
+        } catch {
+          // Ignore
+        }
+      }
+
+      handleDismissUsdcBanner();
       setDepositAmount("");
       setActivePoolForm(null);
       setCardSuccess((prev) => ({ ...prev, [poolAddr]: `Successfully deposited ${amount.toLocaleString()} USDC!` }));
@@ -697,9 +740,17 @@ export default function DashboardPage() {
                         <div className="p-3.5 bg-secondary/30 border border-border rounded-xl space-y-3 animate-glow">
                           {pool.state === 0 && (
                             <div className="space-y-2">
-                              <div className="text-[11px] text-muted-foreground">
-                                Minimum deposit: <span className="text-white font-semibold">{pool.minInvestment} USDC</span> | 
-                                Maximum deposit: <span className="text-white font-semibold">{pool.maxInvestment} USDC</span>
+                              <div className="text-[11px] text-muted-foreground space-y-1">
+                                <div>
+                                  Minimum deposit: <span className="text-white font-semibold">{pool.minInvestment.toLocaleString()} USDC</span> | 
+                                  Maximum allocation: <span className="text-white font-semibold">{pool.maxInvestment.toLocaleString()} USDC</span>
+                                </div>
+                                {(investorBalances[pool.address] || 0) > 0 && (
+                                  <div className="text-amber-400 font-medium text-[10px]">
+                                    Already deposited: <span className="font-bold">{investorBalances[pool.address].toLocaleString()} USDC</span> | 
+                                    Max additional deposit: <span className="font-bold">{Math.max(0, pool.maxInvestment - investorBalances[pool.address]).toLocaleString()} USDC</span>
+                                  </div>
+                                )}
                               </div>
                               <div className="flex gap-2">
                                 <input
