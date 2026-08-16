@@ -203,12 +203,12 @@ export class WalletService {
 }
 ```
 
-### 2. Smart Contract Integration Codebase (`@stellar/stellar-sdk`)
+### 2. Smart Contract Integration Codebase (`@stellar/stellar-sdk` / `stellar-sdk`)
 
-Below is the complete implementation source code utilizing `@stellar/stellar-sdk` for Soroban contract initialization, RPC server calls, `TransactionBuilder`, `Operation.invokeContractFunction`, and ScVal data conversion:
+Below is the complete implementation source code utilizing `@stellar/stellar-sdk` for Soroban `Contract` initialization, RPC server calls (`server.simulateTransaction`, `server.sendTransaction`, `server.getTransaction`), `TransactionBuilder`, `contract.call(...)`, and ScVal data conversion (`nativeToScVal`, `scValToNative`, `Address.fromString`):
 
 ```typescript
-import { rpc, TransactionBuilder, Account, Operation, Address, nativeToScVal, scValToNative } from "@stellar/stellar-sdk";
+import { Contract, rpc, TransactionBuilder, Account, Operation, Address, nativeToScVal, scValToNative } from "@stellar/stellar-sdk";
 
 export class ContractService {
   // Build, simulate, and assemble Soroban contract invocation transaction
@@ -216,12 +216,13 @@ export class ContractService {
     const server = new rpc.Server("https://soroban-testnet.stellar.org");
     const accountData = await server.getAccount(userAddress);
 
-    const op = Operation.invokeContractFunction({
-      contract: contractId,
-      function: functionName,
-      args,
-    });
+    // 1. Soroban Contract Class Initialization
+    const contract = new Contract(contractId);
 
+    // 2. Build Operation via contract.call
+    const op = contract.call(functionName, ...args);
+
+    // 3. Build Transaction with TransactionBuilder
     const tx = new TransactionBuilder(
       new Account(userAddress, accountData.sequenceNumber()),
       { fee: "100000", networkPassphrase: "Test SDF Network ; September 2015" }
@@ -230,6 +231,7 @@ export class ContractService {
       .setTimeout(100)
       .build();
 
+    // 4. RPC Prepare / Simulation
     const simRes = await server.simulateTransaction(tx);
     return rpc.assembleTransaction(tx, simRes).build();
   }

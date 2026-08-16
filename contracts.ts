@@ -52,8 +52,8 @@ export class ContractService {
     callerAddress?: string
   ): Promise<any> {
     const {
+      Contract,
       Account,
-      Operation,
       TransactionBuilder,
       rpc,
     } = await getStellarSdk();
@@ -62,15 +62,14 @@ export class ContractService {
     const server = await this.stellarService.getServerAsync();
     const details = this.stellarService.getNetworkDetails();
 
+    // Soroban Contract class initialization
+    const contract = new Contract(contractId);
+
     const accountData = await server.getAccount(sender).catch(() => ({
       sequenceNumber: () => "0",
     }));
 
-    const op = Operation.invokeContractFunction({
-      contract: contractId,
-      function: functionName,
-      args,
-    });
+    const op = contract.call(functionName, ...args);
 
     const tx = new TransactionBuilder(
       new Account(sender, accountData.sequenceNumber()),
@@ -97,8 +96,8 @@ export class ContractService {
     args: any[] = []
   ): Promise<any> {
     const {
+      Contract,
       Account,
-      Operation,
       TransactionBuilder,
       rpc,
       scValToNative,
@@ -108,11 +107,8 @@ export class ContractService {
     const details = this.stellarService.getNetworkDetails();
     const dummySource = this.activePublicKey ?? "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN";
 
-    const op = Operation.invokeContractFunction({
-      contract: contractId,
-      function: functionName,
-      args,
-    });
+    const contract = new Contract(contractId);
+    const op = contract.call(functionName, ...args);
 
     const tx = new TransactionBuilder(new Account(dummySource, "0"), {
       fee: "100",

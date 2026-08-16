@@ -55,9 +55,9 @@ export class ContractService {
     args: any[] = []
   ): Promise<any> {
     const {
+      Contract,
       Address,
       Account,
-      Operation,
       TransactionBuilder,
       rpc,
     } = await getStellarSdk();
@@ -68,16 +68,14 @@ export class ContractService {
     const server = await stellarService.getServerAsync();
     const details = stellarService.getNetworkDetails();
 
+    const contract = new Contract(contractId);
+
     // Fetch source account sequence number
     const accountData = await server.getAccount(publicKey).catch(() => ({
       sequenceNumber: () => "0",
     }));
 
-    const op = Operation.invokeContractFunction({
-      contract: contractId,
-      function: functionName,
-      args,
-    });
+    const op = contract.call(functionName, ...args);
 
     const tx = new TransactionBuilder(
       new Account(publicKey, accountData.sequenceNumber()),
@@ -107,9 +105,9 @@ export class ContractService {
     args: any[] = []
   ): Promise<any> {
     const {
+      Contract,
       Address,
       Account,
-      Operation,
       TransactionBuilder,
       rpc,
       scValToNative,
@@ -122,11 +120,8 @@ export class ContractService {
     const dummySource =
       publicKey ?? "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN";
 
-    const op = Operation.invokeContractFunction({
-      contract: contractId,
-      function: functionName,
-      args,
-    });
+    const contract = new Contract(contractId);
+    const op = contract.call(functionName, ...args);
 
     const tx = new TransactionBuilder(new Account(dummySource, "0"), {
       fee: "100",
