@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
-import { ArrowRight, Coins, ShieldAlert, BarChart3, Users, Zap } from "lucide-react";
+import { ArrowRight, Coins, ShieldAlert, BarChart3, Users } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -12,11 +12,6 @@ export default function LandingPage() {
       <div className="text-center max-w-3xl mx-auto space-y-6 relative z-10">
         <div className="flex flex-col items-center gap-4">
           <Logo size="xl" subtitle="DECENTRALIZED SYNDICATES" interactive={false} />
-          
-          <div className="inline-flex items-center gap-2 bg-primary/15 border border-primary/20 px-4 py-1.5 rounded-full text-xs font-bold text-primary tracking-wide uppercase mt-2">
-            <Zap size={12} className="animate-bounce" />
-            Powered by Soroban Smart Contracts
-          </div>
         </div>
 
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
