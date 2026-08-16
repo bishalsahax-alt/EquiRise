@@ -1,17 +1,24 @@
 {
-  "name": "equirise-contracts-deploy",
+  "name": "equirise-syndicate-platform",
   "version": "1.0.0",
+  "description": "EquiRise - Decentralized Startup Syndicate Platform on Stellar Soroban",
+  "main": "src/index.ts",
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
+    "test": "npm --prefix frontend test",
     "setup:testnet": "ts-node scripts/setup_testnet.ts",
     "deploy:testnet": "ts-node scripts/deploy.ts"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "stellar-sdk": "^12.3.0"
+    "@creit.tech/stellar-wallets-kit": "^2.4.0",
+    "@stellar/stellar-sdk": "^16.0.1",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
+    "@types/node": "^20.12.12",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3",
-    "@types/node": "^20.12.12"
+    "typescript": "^5.6.3"
   }
 }
