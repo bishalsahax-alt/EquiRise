@@ -22,105 +22,98 @@ export function LogoIcon({ size = "md", className }: { size?: "sm" | "md" | "lg"
     xl: "w-16 h-16",
   };
 
-  const [imgError, setImgError] = React.useState(false);
+  const idSuffix = React.useId().replace(/:/g, "");
 
   return (
     <div className={clsx("relative flex items-center justify-center shrink-0 group", sizeMap[size], className)}>
-      {/* Background glow flare */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-primary via-orange-500 to-amber-400 rounded-xl blur-md opacity-50 group-hover:opacity-90 transition-opacity duration-300" />
-      
-      {!imgError ? (
-        <div className="relative z-10 w-full h-full rounded-xl overflow-hidden border border-orange-500/40 shadow-lg group-hover:scale-105 transition-transform duration-300">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo.png"
-            alt="EquiRise Logo"
-            className="w-full h-full object-cover"
-            onError={() => setImgError(true)}
-          />
-        </div>
-      ) : (
-        /* Vector Logo Canvas Fallback */
-        <svg
-          viewBox="0 0 100 100"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full relative z-10 drop-shadow-md group-hover:scale-105 transition-transform duration-300"
-        >
-          <defs>
-            <linearGradient id="eqLogoGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#EA580C" />
-              <stop offset="45%" stopColor="#FF5E00" />
-              <stop offset="100%" stopColor="#F59E0B" />
-            </linearGradient>
+      {/* Glow aura */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-primary via-orange-500 to-amber-400 rounded-xl blur-md opacity-40 group-hover:opacity-80 transition-opacity duration-300" />
 
-            <linearGradient id="eqShinyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#FF8A00" stopOpacity="0.2" />
-            </linearGradient>
+      {/* Vector Logo Emblem */}
+      <svg
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full relative z-10 drop-shadow-lg group-hover:scale-105 transition-transform duration-300"
+      >
+        <defs>
+          <linearGradient id={`eqLogoGrad_${idSuffix}`} x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#EA580C" />
+            <stop offset="45%" stopColor="#FF5E00" />
+            <stop offset="100%" stopColor="#F59E0B" />
+          </linearGradient>
 
-            <linearGradient id="eqBaseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#1E1B4B" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#0F172A" stopOpacity="0.95" />
-            </linearGradient>
+          <linearGradient id={`eqShinyGrad_${idSuffix}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#FF8A00" stopOpacity="0.3" />
+          </linearGradient>
 
-            <filter id="eqGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2.5" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
+          <linearGradient id={`eqBaseGrad_${idSuffix}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#1E1B4B" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#0F172A" stopOpacity="0.98" />
+          </linearGradient>
 
-          <rect
-            x="4"
-            y="4"
-            width="92"
-            height="92"
-            rx="24"
-            fill="url(#eqBaseGrad)"
-            stroke="url(#eqLogoGrad)"
-            strokeWidth="3"
-          />
+          <filter id={`eqGlowFilter_${idSuffix}`} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
 
-          <rect
-            x="7"
-            y="7"
-            width="86"
-            height="86"
-            rx="21"
-            stroke="#FFFFFF"
-            strokeOpacity="0.1"
-            strokeWidth="1.5"
-          />
+        {/* Squircle Base Frame */}
+        <rect
+          x="5"
+          y="5"
+          width="90"
+          height="90"
+          rx="24"
+          fill={`url(#eqBaseGrad_${idSuffix})`}
+          stroke={`url(#eqLogoGrad_${idSuffix})`}
+          strokeWidth="3"
+        />
 
-          <rect x="22" y="24" width="14" height="52" rx="4" fill="url(#eqLogoGrad)" />
-          <rect x="36" y="64" width="32" height="12" rx="4" fill="url(#eqLogoGrad)" />
-          <rect x="36" y="44" width="24" height="11" rx="3.5" fill="url(#eqLogoGrad)" />
+        {/* Inner Bevel Highlight */}
+        <rect
+          x="8"
+          y="8"
+          width="84"
+          height="84"
+          rx="21"
+          stroke="#FFFFFF"
+          strokeOpacity="0.12"
+          strokeWidth="1.5"
+        />
 
-          <path
-            d="M 36 24 H 56 L 78 24 L 78 46 L 66 34 L 50 50 L 36 36 V 24 Z"
-            fill="url(#eqLogoGrad)"
-            filter="url(#eqGlowFilter)"
-          />
+        {/* 'E' Monogram Base Bars */}
+        <rect x="22" y="24" width="14" height="52" rx="4" fill={`url(#eqLogoGrad_${idSuffix})`} />
+        <rect x="36" y="64" width="32" height="12" rx="4" fill={`url(#eqLogoGrad_${idSuffix})`} />
+        <rect x="36" y="44" width="24" height="11" rx="3.5" fill={`url(#eqLogoGrad_${idSuffix})`} />
 
-          <path
-            d="M 30 58 L 48 40 L 58 50 L 76 28"
-            stroke="url(#eqShinyGrad)"
-            strokeWidth="5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        {/* Ascending Trend Line & Growth Arrow */}
+        <path
+          d="M 36 24 H 56 L 78 24 L 78 46 L 66 34 L 50 50 L 36 36 V 24 Z"
+          fill={`url(#eqLogoGrad_${idSuffix})`}
+          filter={`url(#eqGlowFilter_${idSuffix})`}
+        />
 
-          <path
-            d="M 64 28 H 76 V 40"
-            stroke="url(#eqShinyGrad)"
-            strokeWidth="5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        <path
+          d="M 28 58 L 46 40 L 56 50 L 76 28"
+          stroke={`url(#eqShinyGrad_${idSuffix})`}
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
 
-          <circle cx="76" cy="28" r="3.5" fill="#FFFFFF" className="animate-pulse" />
-        </svg>
-      )}
+        <path
+          d="M 64 28 H 76 V 40"
+          stroke={`url(#eqShinyGrad_${idSuffix})`}
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* Sparkling Peak Node */}
+        <circle cx="76" cy="28" r="3.5" fill="#FFFFFF" className="animate-pulse" />
+      </svg>
     </div>
   );
 }
