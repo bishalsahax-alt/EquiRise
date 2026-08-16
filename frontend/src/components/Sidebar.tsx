@@ -1,5 +1,6 @@
 "use client";
 
+import Logo from "@/components/Logo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
@@ -52,24 +53,14 @@ export default function Sidebar() {
       )}>
         <div>
           {/* Logo */}
-          <Link 
-            href="/"
-            onClick={() => setMobileOpen(false)}
-            className="h-16 flex items-center px-6 border-b border-border gap-2 hover:bg-secondary/30 transition-colors group cursor-pointer"
-            title="Back to Login / Home"
-          >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-orange-400 flex items-center justify-center font-bold text-white shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
-              E
-            </div>
-            <div>
-              <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                EquiRise
-              </span>
-              <span className="text-[10px] text-primary font-bold block leading-none">
-                SYNDICATE
-              </span>
-            </div>
-          </Link>
+          <div className="h-16 flex items-center px-5 border-b border-border">
+            <Logo
+              href="/"
+              size="md"
+              subtitle="SYNDICATE"
+              onClick={() => setMobileOpen(false)}
+            />
+          </div>
 
           {/* Navigation Links */}
           <nav className="p-4 space-y-1">

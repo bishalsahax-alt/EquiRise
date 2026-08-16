@@ -1,5 +1,6 @@
 "use client";
 
+import Logo from "@/components/Logo";
 import { useAppStore } from "@/state/useAppStore";
 import { Wallet, LogOut, ChevronDown, Copy, CheckCheck, ArrowLeft } from "lucide-react";
 import { useState } from "react";
@@ -41,16 +42,20 @@ export default function Navbar() {
   return (
     <>
       <header className="h-16 border-b border-border bg-card/50 backdrop-blur-md px-4 sm:px-6 md:px-8 flex items-center justify-between z-30">
-        {/* Page Title */}
-        <h1 className="text-lg font-bold tracking-tight text-white hidden sm:block">
-          {getPageTitle()}
-        </h1>
+        {/* Page Title & Mobile Brand */}
+        <div className="flex items-center gap-3">
+          {pathname !== "/" && (
+            <div className="md:hidden">
+              <Logo size="sm" showText={false} href="/dashboard" />
+            </div>
+          )}
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-white">
+            {getPageTitle()}
+          </h1>
+        </div>
 
         {pathname === "/" && (
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center font-bold text-xs text-white flex-shrink-0">E</div>
-            <span className="font-extrabold text-sm text-white hidden sm:block">EquiRise</span>
-          </div>
+          <Logo size="sm" subtitle="GATEWAY" href="/" />
         )}
 
         {/* Controls */}
