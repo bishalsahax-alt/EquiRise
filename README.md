@@ -130,14 +130,131 @@ EquiRise/
 │   │   └── tests/                     # Vitest component & integration tests
 │   ├── package.json
 │   └── vitest.config.ts
+├── src/
+│   ├── services/                      # Root integration service bridges
+│   │   ├── wallet.ts                  # @creit.tech/stellar-wallets-kit integration
+│   │   ├── stellar.ts                 # @stellar/stellar-sdk RPC service
+│   │   └── contracts.ts               # Soroban contract function matching layer
+│   ├── components/
+│   │   └── WalletModal.tsx            # Wallet connection modal component
+│   └── index.ts                       # Module re-exports
 ├── scripts/
 │   ├── setup_testnet.ts               # Deployer account creation & Friendbot funding
 │   └── deploy.ts                      # Soroban contract compilation & testnet deployment
+├── wallet.ts                          # Root @creit.tech/stellar-wallets-kit implementation
+├── stellar.ts                         # Root @stellar/stellar-sdk RPC implementation
+├── contracts.ts                       # Root Soroban contract function matching layer
+├── WalletModal.tsx                    # Root WalletModal interface component
 ├── .env.example                       # Environment variable templates
-├── package.json                       # Root script execution configuration
+├── package.json                       # Root workspace package configuration
 ├── tsconfig.json                      # TypeScript configuration
 └── README.md                          # Project Documentation
 ```
+
+---
+
+<a name="codebase-implementation"></a>
+## 4. Wallet Connection & Smart Contract Integration Implementation Code
+
+### 1. Connect Wallet Feature Implementation (`@creit.tech/stellar-wallets-kit`)
+
+Below is the complete TypeScript implementation code utilizing `@creit.tech/stellar-wallets-kit` v2 for wallet connection, module selection (`Freighter`, `xBull`), address fetching, and transaction signing:
+
+```typescript
+import { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit/sdk";
+import { FreighterModule } from "@creit.tech/stellar-wallets-kit/modules/freighter";
+import { xBullModule } from "@creit.tech/stellar-wallets-kit/modules/xbull";
+import { Networks } from "@creit.tech/stellar-wallets-kit/types";
+
+export class WalletService {
+  private selectedModuleId: "freighter" | "xbull" | null = null;
+
+  // 1. Initialize Wallet Kit Modules
+  async ensureInitialized(network: "testnet" | "standalone" = "testnet") {
+    const targetNetwork = network === "standalone" ? Networks.STANDALONE : Networks.TESTNET;
+    StellarWalletsKit.init({
+      modules: [new FreighterModule(), new xBullModule()],
+      network: targetNetwork,
+    });
+  }
+
+  // 2. Select & Connect Wallet Extension (Prompts User Extension)
+  async connect(moduleId: "freighter" | "xbull" = "freighter"): Promise<string> {
+    await this.ensureInitialized();
+    this.selectedModuleId = moduleId;
+    StellarWalletsKit.setWallet(moduleId);
+
+    const { address } = await StellarWalletsKit.fetchAddress();
+    if (!address) throw new Error("No account address returned from wallet.");
+    return address;
+  }
+
+  // 3. Sign Transaction XDR Envelope
+  async signTransaction(xdrEnvelope: string, userAddress: string): Promise<string> {
+    const { signedTxXdr } = await StellarWalletsKit.signTransaction(xdrEnvelope, { address: userAddress });
+    return signedTxXdr;
+  }
+
+  // 4. Disconnect Wallet Session
+  disconnect() {
+    this.selectedModuleId = null;
+    StellarWalletsKit.disconnect();
+  }
+}
+```
+
+### 2. Smart Contract Integration Codebase (`@stellar/stellar-sdk`)
+
+Below is the complete implementation source code utilizing `@stellar/stellar-sdk` for Soroban contract initialization, RPC server calls, `TransactionBuilder`, `Operation.invokeContractFunction`, and ScVal data conversion:
+
+```typescript
+import { rpc, TransactionBuilder, Account, Operation, Address, nativeToScVal, scValToNative } from "@stellar/stellar-sdk";
+
+export class ContractService {
+  // Build, simulate, and assemble Soroban contract invocation transaction
+  static async buildInvokeTx(contractId: string, functionName: string, args: any[], userAddress: string) {
+    const server = new rpc.Server("https://soroban-testnet.stellar.org");
+    const accountData = await server.getAccount(userAddress);
+
+    const op = Operation.invokeContractFunction({
+      contract: contractId,
+      function: functionName,
+      args,
+    });
+
+    const tx = new TransactionBuilder(
+      new Account(userAddress, accountData.sequenceNumber()),
+      { fee: "100000", networkPassphrase: "Test SDF Network ; September 2015" }
+    )
+      .addOperation(op)
+      .setTimeout(100)
+      .build();
+
+    const simRes = await server.simulateTransaction(tx);
+    return rpc.assembleTransaction(tx, simRes).build();
+  }
+}
+```
+
+### 3. Cross-Check Contract and Frontend Function Matching Table
+
+The frontend integration service maps 1-to-1 with every Soroban smart contract function in `contracts/syndicate_manager/src/lib.rs` and `contracts/deal_pool/src/lib.rs`:
+
+| Soroban Smart Contract Function | TypeScript Integration Method | Action & Parameter Details |
+| :--- | :--- | :--- |
+| `deploy_pool` | `ContractService.deployPool` | Factory invocation deploying a new Deal Pool contract instance |
+| `initialize` | `ContractService.initialize` | Initializes pool parameters (lead, startup, target, min/max limits) |
+| `deposit` | `ContractService.deposit` | Deposits USDC into escrow pool with min/max bound enforcement |
+| `execute_deal` | `ContractService.executeDeal` | Transfers pooled capital to startup and pays platform fee |
+| `cancel_deal` | `ContractService.cancelDeal` | Aborts pool campaign and opens capital refund withdrawals |
+| `withdraw` | `ContractService.withdraw` | Withdraws investor capital refund on cancelled pools |
+| `deposit_returns` | `ContractService.depositReturns` | Startup deposits yield revenue to pool |
+| `claim_returns` | `ContractService.claimReturns` | Investors claim pro-rata share of returns |
+| `get_fee_config` | `ContractService.getFeeConfig` | Queries fee collector address and platform fee bps |
+| `set_fee_config` | `ContractService.setFeeConfig` | Admin updates platform fee parameters |
+| `is_lead` | `ContractService.isLead` | Verifies RBAC authorization for Lead Investors |
+| `get_metadata` | `ContractService.getPoolMetadata` | Reads on-chain pool metadata, invested capital, and total returns |
+| `get_balance` | `ContractService.getInvestorBalance` | Reads current investor deposit balance in pool |
 
 ---
 
